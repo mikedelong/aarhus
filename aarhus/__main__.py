@@ -1,15 +1,21 @@
-
 import json
 import logging
+import os
 import time
 
 
 class Importer(object):
-
     logging.basicConfig(format='%(asctime)s : %(levelname)s :: %(message)s', level=logging.DEBUG)
 
-    def __init__(self, arg_input_folder):
-        logging.debug(arg_input_folder)
+    def __init__(self):
+        pass
+
+    def process_folder(self, arg_folder):
+        document_count = 0
+        for root, subdirectories, files in os.walk(arg_folder):
+            for current in files:
+                current_full_file_name = os.path.join(root, current)
+                logging.debug("%d %s", document_count, current_full_file_name)
 
 
 def run():
@@ -20,8 +26,8 @@ def run():
         logging.debug(data)
         input_folder = data['input_folder']
 
-    instance = Importer(input_folder)
-    pass
+    instance = Importer()
+    instance.process_folder(input_folder)
 
     finish_time = time.time()
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
@@ -32,4 +38,3 @@ def run():
 
 if __name__ == '__main__':
     run()
-
