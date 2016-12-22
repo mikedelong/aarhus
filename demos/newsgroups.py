@@ -1,3 +1,5 @@
+# modified from http://scikit-learn.org/stable/tutorial/text_analytics/working_with_text_data.html
+
 import numpy as np
 from sklearn import metrics
 from sklearn.datasets import fetch_20newsgroups
@@ -43,8 +45,7 @@ predicted_naive_bayes_1 = clf_naive_bayes.predict(X_new_tfidf)
 for doc, category in zip(docs_new, predicted_naive_bayes_1):
     print('%r => %s' % (doc, twenty_train.target_names[category]))
 
-
-text_clf_naive_bayes = Pipeline([('vect', CountVectorizer()), ('tfidf', TfidfTransformer()), ('clf', MultinomialNB()) ])
+text_clf_naive_bayes = Pipeline([('vect', CountVectorizer()), ('tfidf', TfidfTransformer()), ('clf', MultinomialNB())])
 text_clf_naive_bayes = text_clf_naive_bayes.fit(twenty_train.data, twenty_train.target)
 
 twenty_test = fetch_20newsgroups(subset='test', categories=categories, shuffle=True, random_state=0)
@@ -54,17 +55,18 @@ predicted_naive_bayes_2 = text_clf_naive_bayes.predict(docs_test)
 print(np.mean(predicted_naive_bayes_2 == twenty_test.target))
 
 text_clf_support_vector = Pipeline([('vect', CountVectorizer()), ('tfidf', TfidfTransformer()),
-                     ('clf', SGDClassifier(loss='hinge', penalty='l2', alpha=1e-3, n_iter=5, random_state=0)), ])
+                                    ('clf', SGDClassifier(loss='hinge', penalty='l2', alpha=1e-3, n_iter=5,
+                                                          random_state=0)), ])
 _ = text_clf_support_vector.fit(twenty_train.data, twenty_train.target)
 predicted_support_vector = text_clf_support_vector.predict(docs_test)
 print(np.mean(predicted_support_vector == twenty_test.target))
 
-print(metrics.classification_report(twenty_test.target, predicted_support_vector, target_names=twenty_test.target_names))
+print(
+metrics.classification_report(twenty_test.target, predicted_support_vector, target_names=twenty_test.target_names))
 
-parameters = {'vect__ngram_range': [(1, 1), (1, 2)], 'tfidf__use_idf': (True, False), 'clf__alpha': (1e-2, 1e-3) }
+parameters = {'vect__ngram_range': [(1, 1), (1, 2)], 'tfidf__use_idf': (True, False), 'clf__alpha': (1e-2, 1e-3)}
 
 gs_clf = GridSearchCV(text_clf_support_vector, parameters, n_jobs=-1)
 
 gs_clf = gs_clf.fit(twenty_train.data[:400], twenty_train.target[:400])
 print(twenty_train.target_names[gs_clf.predict(['God is love'])[0]])
-
