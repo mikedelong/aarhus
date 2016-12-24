@@ -12,7 +12,7 @@ with open('./matrix_factorization_input.json') as data_file:
     logging.debug(data)
     input_folder = data['input_folder']
 
-filenames = sorted([os.path.join(input_folder, fn) for fn in os.listdir(input_folder)])
+filenames = sorted([os.path.join(input_folder, file_name) for file_name in os.listdir(input_folder)])
 
 # truncate
 filenames = filenames[:500]
