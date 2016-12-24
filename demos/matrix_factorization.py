@@ -1,3 +1,4 @@
+import cPickle as pickle
 import json
 import logging
 import os
@@ -11,11 +12,12 @@ with open('./matrix_factorization_input.json') as data_file:
     data = json.load(data_file)
     logging.debug(data)
     input_folder = data['input_folder']
+    pickle_file_name = data['pickle_file_name']
 
 filenames = sorted([os.path.join(input_folder, file_name) for file_name in os.listdir(input_folder)])
 
 # truncate
-filenames = filenames[:500]
+filenames = filenames[:1000]
 
 # todo what is min_df
 vectorizer = text.CountVectorizer(input='filename', stop_words='english', min_df=20, decode_error='ignore')
@@ -24,8 +26,8 @@ dtm = vectorizer.fit_transform(filenames).toarray()
 logging.debug('created matrix')
 vocabulary = numpy.array(vectorizer.get_feature_names())
 logging.debug('matrix shape: %s, vocabulary size: %d', dtm.shape, len(vocabulary))
-topics_count = 20
-top_words_count = 20
+topics_count = 30
+top_words_count = 25
 clf = decomposition.NMF(n_components=topics_count, random_state=0)
 logging.debug('decomposition complete.')
 doctopic = clf.fit_transform(dtm)
@@ -58,7 +60,13 @@ logging.info("Top NMF topics in...")
 for i in range(len(doctopic)):
     top_topics = numpy.argsort(doctopic[i, :])[::-1][0:3]
     top_topics_str = ' '.join(str(t) for t in top_topics)
-    logging.info("{}: {}".format(names[i], top_topics_str))
+    # logging.info("{}: {}".format(names[i], top_topics_str))
 
 for t in range(len(topic_words)):
     logging.info("Topic {}: {}".format(t, ' '.join(topic_words[t][:15])))
+
+out_pickle = {
+    'doctopic' : doctopic,
+    'topic_words' : topic_words
+}
+pickle.dump(out_pickle, open( pickle_file_name, 'wb' ))
