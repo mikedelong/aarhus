@@ -13,11 +13,15 @@ with open('./matrix_factorization_input.json') as data_file:
     logging.debug(data)
     input_folder = data['input_folder']
     pickle_file_name = data['pickle_file_name']
+    max_file_count = data['max_file_count']
+    topics_count = data['topics_count']
+    top_words_count = data['top_words_count']
 
 filenames = sorted([os.path.join(input_folder, file_name) for file_name in os.listdir(input_folder)])
 
 # truncate
-filenames = filenames[:1000]
+if max_file_count < len(filenames) and max_file_count != -1:
+    filenames = filenames[:max_file_count]
 
 # todo what is min_df
 vectorizer = text.CountVectorizer(input='filename', stop_words='english', min_df=20, decode_error='ignore')
@@ -26,8 +30,6 @@ dtm = vectorizer.fit_transform(filenames).toarray()
 logging.debug('created matrix')
 vocabulary = numpy.array(vectorizer.get_feature_names())
 logging.debug('matrix shape: %s, vocabulary size: %d', dtm.shape, len(vocabulary))
-topics_count = 30
-top_words_count = 25
 clf = decomposition.NMF(n_components=topics_count, random_state=0)
 logging.debug('decomposition complete.')
 doctopic = clf.fit_transform(dtm)
