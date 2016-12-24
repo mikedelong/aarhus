@@ -65,7 +65,7 @@ for i in range(len(doctopic)):
     # logging.info("{}: {}".format(names[i], top_topics_str))
 
 for t in range(len(topic_words)):
-    logging.info("Topic {}: {}".format(t, ' '.join(topic_words[t][:15])))
+    logging.info("Topic {}: {}".format(t, ' '.join(topic_words[t][:top_words_count])))
 
 out_pickle = {
     'doctopic' : doctopic,
