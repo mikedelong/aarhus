@@ -17,16 +17,18 @@ with open('./matrix_factorization_input.json') as data_file:
     topics_count = data['topics_count']
     top_words_count = data['top_words_count']
 
-filenames = sorted([os.path.join(input_folder, file_name) for file_name in os.listdir(input_folder)])
+
+file_names = [os.path.join(root, current) for root, subdirectories,files in os.walk(input_folder) for current in files]
 
 # truncate
-if max_file_count < len(filenames) and max_file_count != -1:
-    filenames = filenames[:max_file_count]
+if max_file_count < len(file_names) and max_file_count != -1:
+    file_names = file_names[:max_file_count]
 
+logging.debug('we are working with %d files.' % len(file_names))
 # todo what is min_df
 vectorizer = text.CountVectorizer(input='filename', stop_words='english', min_df=20, decode_error='ignore')
 logging.debug('created vectorizer')
-dtm = vectorizer.fit_transform(filenames).toarray()
+dtm = vectorizer.fit_transform(file_names).toarray()
 logging.debug('created matrix')
 vocabulary = numpy.array(vectorizer.get_feature_names())
 logging.debug('matrix shape: %s, vocabulary size: %d', dtm.shape, len(vocabulary))
@@ -41,7 +43,7 @@ for topic in clf.components_:
 doctopic /= numpy.sum(doctopic, axis=1, keepdims=True)
 
 names = []
-for file_name in filenames:
+for file_name in file_names:
     basename = os.path.basename(file_name)
     names.append(basename)
 
@@ -55,6 +57,13 @@ for i, name in enumerate(sorted(set(names))):
 
 doctopic = doctopic_grouped
 
+out_pickle = {
+    'doctopic' : doctopic,
+    'topic_words' : topic_words
+}
+pickle.dump(out_pickle, open( pickle_file_name, 'wb' ))
+logging.debug('pickle file written.')
+
 t0 = sorted(set(names))
 
 logging.info("Top NMF topics in...")
@@ -67,8 +76,3 @@ for i in range(len(doctopic)):
 for t in range(len(topic_words)):
     logging.info("Topic {}: {}".format(t, ' '.join(topic_words[t][:top_words_count])))
 
-out_pickle = {
-    'doctopic' : doctopic,
-    'topic_words' : topic_words
-}
-pickle.dump(out_pickle, open( pickle_file_name, 'wb' ))
