@@ -50,13 +50,14 @@ if max_file_count < len(file_names) and max_file_count != -1:
     file_names = file_names[:max_file_count]
 logging.debug('we are using %d files', len(file_names))
 
-documents = []
-for file_name in file_names:
-    with open(file_name, 'r') as file_pointer:
-        document = file_pointer.read()
-        document = document.decode('utf-8', 'ignore').encode('ascii', 'ignore')
+# documents = []
+# for file_name in file_names:
+#     with open(file_name, 'r') as file_pointer:
+#         document = file_pointer.read().decode('utf-8', 'ignore').encode('ascii', 'ignore')
+#         documents.append(document)
 
-        documents.append(document)
+documents = [open(file_name, 'r').read().decode('utf-8', 'ignore').encode('ascii', 'ignore') for file_name in
+             file_names]
 logging.debug('documents array has length %d' % len(documents))
 
 preprocess = [strip_proppers(document) for document in documents]
@@ -64,7 +65,9 @@ logging.debug('done stripping propers; result has length %d ', len(preprocess))
 
 tokenized_text = [tokenize_and_stem(text) for text in preprocess]
 logging.debug('done tokenizing; result has length %d', len(tokenized_text))
-stopwords = nltk.corpus.stopwords.words('english')
+specific_stopwords = ['gmail.com', 'http', 'https', 'mailto', '\'s', 'n\'t', 'hillaryclinton.com', 'googlegroups.com',
+                      'law.georgetown.edu']
+stopwords = nltk.corpus.stopwords.words('english') + specific_stopwords
 logging.debug('imported stopwords; we have %d of them', len(stopwords))
 texts = [[word for word in text if word not in stopwords] for text in tokenized_text]
 logging.debug('after stopword removal result has length %d', len(texts))
@@ -78,8 +81,8 @@ logging.debug('dictionary has length %d', len(dictionary))
 corpus = [dictionary.doc2bow(text) for text in texts]
 logging.debug('corpus size is %d', len(corpus))
 
-model = models.LdaModel(corpus, num_topics=topics_count, id2word=dictionary, update_every=5, chunksize=10000, passes=lda_passes,
-                        distributed=False, random_state=0)
+model = models.LdaModel(corpus, num_topics=topics_count, id2word=dictionary, update_every=5, chunksize=10000,
+                        passes=lda_passes, distributed=False, random_state=0)
 logging.debug('built LDA model')
 
 model.show_topics(num_topics=topics_count)
@@ -92,3 +95,8 @@ logging.debug(topics_matrix)
 # for i in topic_words:
 #     logging.debug(([str(word) for word in i]))
 #     logging.debug()
+
+# now let's go back and check some documents and see what their topics are
+
+model.print_topics(-1)
+
