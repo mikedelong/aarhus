@@ -9,9 +9,10 @@ import nltk
 from gensim import corpora, models
 from nltk.stem.snowball import SnowballStemmer
 
-stemmer = SnowballStemmer("english")
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s :: %(message)s', level=logging.DEBUG)
+
+stemmer = SnowballStemmer("english")
 
 
 def strip_proppers(text):
@@ -37,11 +38,11 @@ with open('./gensim_lda_input.json') as data_file:
     data = json.load(data_file)
     logging.debug(data)
     input_folder = data['input_folder']
-    # pickle_file_name = data['pickle_file_name']
     max_file_count = data['max_file_count']
     topics_count = data['topics_count']
     top_words_count = data['top_words_count']
     lda_passes = data['passes']
+    model_file_name = data['model_file_name']
 
 file_names = [os.path.join(root, current) for root, subdirectories, files in os.walk(input_folder) for current in files]
 logging.debug('we have %d files', len(file_names))
@@ -66,7 +67,7 @@ logging.debug('done stripping propers; result has length %d ', len(preprocess))
 tokenized_text = [tokenize_and_stem(text) for text in preprocess]
 logging.debug('done tokenizing; result has length %d', len(tokenized_text))
 specific_stopwords = ['gmail.com', 'http', 'https', 'mailto', '\'s', 'n\'t', 'hillaryclinton.com', 'googlegroups.com',
-                      'law.georgetown.edu']
+                      'law.georgetown.edu', 'javascript', 'wrote', 'email']
 stopwords = nltk.corpus.stopwords.words('english') + specific_stopwords
 logging.debug('imported stopwords; we have %d of them', len(stopwords))
 texts = [[word for word in text if word not in stopwords] for text in tokenized_text]
@@ -83,8 +84,11 @@ logging.debug('corpus size is %d', len(corpus))
 
 model = models.LdaModel(corpus, num_topics=topics_count, id2word=dictionary, update_every=5, chunksize=10000,
                         passes=lda_passes, distributed=False, random_state=0)
+
 logging.debug('built LDA model')
 
+model.save(model_file_name)
+logging.debug('saved LDA model as %s' % model_file_name)
 model.show_topics(num_topics=topics_count)
 
 topics_matrix = model.show_topics(formatted=False, num_words=top_words_count)
