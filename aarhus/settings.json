@@ -1,1 +1,1 @@
-{ "input_folder" : "/home/user/data"}
+{ "input_folder" : "/home/user/data", "document_count_limit" : -1}

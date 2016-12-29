@@ -15,16 +15,19 @@ sys.setdefaultencoding("utf8")
 class Importer(object):
     logging.basicConfig(format='%(asctime)s : %(levelname)s :: %(message)s', level=logging.DEBUG)
 
-    def __init__(self):
+    def __init__(self, arg_document_count_limit=sys.maxint):
+        self.document_count_limit = arg_document_count_limit
         pass
 
     def process_folder(self, arg_folder):
         document_count = 0
         for root, subdirectories, files in os.walk(arg_folder):
             for current in files:
-                current_full_file_name = os.path.join(root, current)
-                logging.debug("%d %s", document_count, current_full_file_name)
-                current_json = self.get_json(current_full_file_name)
+                if document_count < self.document_count_limit:
+                    current_full_file_name = os.path.join(root, current)
+                    logging.debug("%d %s", document_count, current_full_file_name)
+                    current_json = self.get_json(current_full_file_name)
+                    document_count += 1
 
 
     target_encoding = 'utf-8'
@@ -65,12 +68,15 @@ class Importer(object):
 def run():
     start_time = time.time()
 
-    with open('settings.json') as data_file:
+    with open('real-settings.json') as data_file:
         data = json.load(data_file)
         logging.debug(data)
         input_folder = data['input_folder']
+        document_count_limit = data['document_count_limit']
+        if document_count_limit == -1:
+            document_count_limit = sys.maxint
 
-    instance = Importer()
+    instance = Importer(arg_document_count_limit=document_count_limit)
     instance.process_folder(input_folder)
 
     finish_time = time.time()
