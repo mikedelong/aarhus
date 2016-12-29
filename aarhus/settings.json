@@ -1,1 +1,7 @@
-{ "input_folder" : "/home/user/data", "document_count_limit" : -1}
+{
+  "input_folder": "/home/user/data",
+  "document_count_limit": -1,
+  "process_text_part": true,
+  "process_html_part": true,
+  "process_both_empty": true
+}

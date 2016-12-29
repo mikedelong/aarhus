@@ -11,12 +11,15 @@ reload(sys)
 sys.setdefaultencoding("utf8")
 
 
-
 class Importer(object):
     logging.basicConfig(format='%(asctime)s : %(levelname)s :: %(message)s', level=logging.DEBUG)
 
-    def __init__(self, arg_document_count_limit=sys.maxint):
+    def __init__(self, arg_document_count_limit=sys.maxint, arg_process_text_part=True, arg_process_html_part=False,
+                 arg_process_both_empty=False):
         self.document_count_limit = arg_document_count_limit
+        self.process_text_part = arg_process_text_part
+        self.process_html_part = arg_process_html_part
+        self.process_both_empty = arg_process_both_empty
         pass
 
     def process_folder(self, arg_folder):
@@ -26,12 +29,15 @@ class Importer(object):
                 if document_count < self.document_count_limit:
                     current_full_file_name = os.path.join(root, current)
                     logging.debug("%d %s", document_count, current_full_file_name)
-                    current_json = self.get_json(current_full_file_name)
+                    current_json = self.get_json(current_full_file_name,
+                                                 arg_process_text_part=self.process_text_part,
+                                                 arg_process_html_part=self.process_html_part,
+                                                 arg_process_both_empty=self.process_both_empty)
                     document_count += 1
 
-
     target_encoding = 'utf-8'
-    def get_json(self, current_file):
+
+    def get_json(self, current_file, arg_process_text_part, arg_process_html_part, arg_process_both_empty):
         result = {'original_file': current_file}
         with open(current_file, 'rb') as fp:
             message = pyzmail.message_from_file(fp)
@@ -41,7 +47,7 @@ class Importer(object):
             result['subject'] = '' if subject is None else subject.decode('iso-8859-1').encode(self.target_encoding)
 
             text_part = message.text_part
-            if text_part is not None:
+            if text_part is not None and arg_process_text_part:
                 charset = text_part.charset
                 payload = text_part.get_payload()
                 if charset is not None:
@@ -55,15 +61,18 @@ class Importer(object):
                             logging.warn('lookup error %s', lookupError)
                 else:
                     result['body'] = payload.decode('utf-8', 'ignore').encode(self.target_encoding)
-            elif message.html_part is not None:
+            elif message.html_part is not None and arg_process_html_part:
                 payload = message.html_part.part.get_payload()
                 payload_text = bs4.BeautifulSoup(payload, 'lxml').get_text().strip()
                 charset = message.html_part.charset if message.html_part.charset is not None else 'utf-8'
                 result['body'] = payload_text.decode(charset, 'ignore').encode(self.target_encoding)
-            else:
+            elif arg_process_both_empty:
                 logging.warn('both text_part and html_part are None: %s', current_file)
+            else:
+                logging.warn('not processing %s', current_file)
 
             return result
+
 
 def run():
     start_time = time.time()
@@ -75,8 +84,12 @@ def run():
         document_count_limit = data['document_count_limit']
         if document_count_limit == -1:
             document_count_limit = sys.maxint
+        process_text_part = data['process_text_part']
+        process_html_part = data['process_html_part']
+        process_both_empty = data['process_both_empty']
 
-    instance = Importer(arg_document_count_limit=document_count_limit)
+    instance = Importer(arg_document_count_limit=document_count_limit, arg_process_text_part=process_text_part,
+                        arg_process_html_part=process_html_part, arg_process_both_empty=process_both_empty)
     instance.process_folder(input_folder)
 
     finish_time = time.time()
