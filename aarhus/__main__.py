@@ -1,4 +1,5 @@
 import dateutil.parser
+import hashlib
 import json
 import logging
 import os
@@ -6,6 +7,8 @@ import sys
 import time
 
 import bs4
+import elasticsearch
+import elasticsearch.helpers
 import pyzmail
 
 # http://mypy.pythonblogs.com/12_mypy/archive/1253_workaround_for_python_bug_ascii_codec_cant_encode_character_uxa0_in_position_111_ordinal_not_in_range128.html
@@ -24,19 +27,53 @@ class Importer(object):
         self.process_both_empty = arg_process_both_empty
         pass
 
-    def process_folder(self, arg_folder):
+    def process_folder(self, arg_folder, arg_bulk_upload, arg_document_type, arg_buffer_limit, arg_server,
+                       arg_index_name):
         document_count = 0
+        document_buffer = []
+        indexed_count = 0
+        error_count = 0
         for root, subdirectories, files in os.walk(arg_folder):
             for current in files:
                 if document_count < self.document_count_limit:
                     current_full_file_name = os.path.join(root, current)
                     logging.debug("%d %s", document_count, current_full_file_name)
-                    current_json = self.get_json(current_full_file_name,
-                                                 arg_process_text_part=self.process_text_part,
-                                                 arg_process_html_part=self.process_html_part,
-                                                 arg_process_both_empty=self.process_both_empty)
+
+                    current_json, document_id = self.get_json(current_full_file_name,
+                                                              arg_process_text_part=self.process_text_part,
+                                                              arg_process_html_part=self.process_html_part,
+                                                              arg_process_both_empty=self.process_both_empty)
                     logging.debug(current_json)
                     document_count += 1
+                    try:
+                        if arg_bulk_upload:
+                            wrapped = {'_type': arg_document_type, '_source': current_json}
+                            document_buffer.append(wrapped)
+
+                            if len(document_buffer) == arg_buffer_limit:
+                                try:
+                                    index_result = elasticsearch.helpers.bulk(arg_server, document_buffer,
+                                                                              index=arg_index_name,
+                                                                              request_timeout=1000)
+                                    logging.debug(index_result)
+                                    indexed_count += len(document_buffer)
+                                    document_buffer = []
+                                except elasticsearch.exceptions.ConnectionTimeout as connectionTimeout:
+                                    logging.warn(connectionTimeout)
+                                    document_buffer = []
+                        else:
+                            index_result = arg_server.index(index=arg_index_name, doc_type=arg_document_type,
+                                                            body=current_json,
+                                                            id=document_id)
+                            indexed_count += 1
+                            logging.debug("id: %s, result: %s", document_id, index_result)
+                    except elasticsearch.exceptions.SerializationError as serializationError:
+                        logging.warn(serializationError)
+                        error_count += 1
+        # need to flush the pending buffer
+        if arg_bulk_upload and len(document_buffer) > 0:
+            index_result = elasticsearch.helpers.bulk(arg_server, document_buffer, index=arg_index_name)
+            logging.debug(index_result)
 
     target_encoding = 'utf-8'
 
@@ -112,7 +149,11 @@ class Importer(object):
             else:
                 logging.warn('not processing %s', current_file)
 
-            return result
+            md5 = hashlib.md5()
+            with open(current_file, 'rb') as fp:
+                md5.update(fp.read())
+
+            return result, md5.hexdigest()
 
 
 def run():
@@ -128,10 +169,78 @@ def run():
         process_text_part = data['process_text_part']
         process_html_part = data['process_html_part']
         process_both_empty = data['process_both_empty']
+        elasticsearch_host = data['elasticsearch_host']
+        elasticsearch_port = data['elasticsearch_port']
+        elasticsearch_index_name = data['elasticsearch_index_name']
+        elasticsearch_document_type = data['elasticsearch_document_type']
+        elasticsearch_batch_size = data['elasticsearch_batch_size']
+
+        # get the connection to elasticsearch
+        elasticsearch_server = elasticsearch.Elasticsearch([{'host': elasticsearch_host, 'port': elasticsearch_port}])
+
+        if elasticsearch_server.indices.exists(elasticsearch_index_name):
+            elasticsearch_server.indices.delete(elasticsearch_index_name)
+        elasticsearch_server.indices.create(elasticsearch_index_name)
+
+    # todo add mapping
+    mapping = {
+        elasticsearch_document_type: {
+            'properties': {
+                'subject': {
+                    'type': 'string',
+                    'fields': {
+                        'raw': {
+                            'type': 'string',
+                            'index': 'not_analyzed'
+                        }
+                    }
+                },
+                'sender': {
+                    'type': 'string',
+                    'fields': {
+                        'raw': {
+                            'type': 'string',
+                            'index': 'not_analyzed'
+                        }
+                    }
+                },
+                'sender_clean': {
+                    'type': 'string',
+                    'fields': {
+                        'raw': {
+                            'type': 'string',
+                            'index': 'not_analyzed'
+                        }
+                    }
+                },
+                'party': {
+                    'type': 'string',
+                    'fields': {
+                        'raw': {
+                            'type': 'string',
+                            'index': 'not_analyzed'
+                        }
+                    }
+                },
+                'recipient_clean': {
+                    'type': 'string',
+                    'fields': {
+                        'raw': {
+                            'type': 'string',
+                            'index': 'not_analyzed'
+                        }
+                    }
+                }
+            }
+        }
+    }
+    elasticsearch_server.indices.put_mapping(index=elasticsearch_index_name, doc_type=elasticsearch_document_type,
+                                             body=mapping)
 
     instance = Importer(arg_document_count_limit=document_count_limit, arg_process_text_part=process_text_part,
                         arg_process_html_part=process_html_part, arg_process_both_empty=process_both_empty)
-    instance.process_folder(input_folder)
+    instance.process_folder(input_folder, True, elasticsearch_document_type, elasticsearch_batch_size,
+                            elasticsearch_server, elasticsearch_index_name)
 
     finish_time = time.time()
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)

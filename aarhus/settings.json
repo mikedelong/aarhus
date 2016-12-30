@@ -3,5 +3,9 @@
   "document_count_limit": -1,
   "process_text_part": true,
   "process_html_part": true,
-  "process_both_empty": true
+  "process_both_empty": true,
+  "elasticsearch_index_name" : "my_index",
+  "elasticsearch_document_type" : "my_doctype",
+  "elasticsearch_host" : "localhost",
+  "elasticsearch_port" : 9200
 }
