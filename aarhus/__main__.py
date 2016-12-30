@@ -1,10 +1,12 @@
-import bs4
+import dateutil.parser
 import json
 import logging
 import os
-import pyzmail
 import sys
 import time
+
+import bs4
+import pyzmail
 
 # http://mypy.pythonblogs.com/12_mypy/archive/1253_workaround_for_python_bug_ascii_codec_cant_encode_character_uxa0_in_position_111_ordinal_not_in_range128.html
 reload(sys)
@@ -33,18 +35,57 @@ class Importer(object):
                                                  arg_process_text_part=self.process_text_part,
                                                  arg_process_html_part=self.process_html_part,
                                                  arg_process_both_empty=self.process_both_empty)
+                    logging.debug(current_json)
                     document_count += 1
 
     target_encoding = 'utf-8'
+
+    # https://groups.google.com/forum/#!topic/microsoft.public.outlookexpress.general/oig7-xNFISg
+    clean_address_tokens = ['=?us-ascii?Q?', '=0D=0A_=28', '=?utf-8?Q?', '=29?=', '=0D=0A']
+
+    def clean_address(self, argvalue):
+        result = str(argvalue)
+        for token in self.clean_address_tokens:
+            if token in result:
+                result = result.replace(token, ' ')
+        return result.lower().strip()
 
     def get_json(self, current_file, arg_process_text_part, arg_process_html_part, arg_process_both_empty):
         result = {'original_file': current_file}
         with open(current_file, 'rb') as fp:
             message = pyzmail.message_from_file(fp)
+            # todo clean up internal whitespace
             senders = message.get_addresses('from')
-            result['sender'] = senders
+            result['sender'] = [item[i] for i in [0, 1] for item in senders]
+            result['short_sender'] = [item.split('@')[0] for item in result['sender']]
+            result['clean_sender'] = [self.clean_address(item[1]) for item in senders]
+
+            # todo clean up internal whitespace
+            recipients = message.get_addresses('to') + message.get_addresses('cc') + message.get_addresses('bcc')
+            result['recipient'] = recipients
+            result['party'] = list(
+                ['{name} = {address}'.format(name=item[0], address=item[1]) for item in senders + recipients])
+            result['clean_recipient'] = [self.clean_address(item[1]) for item in recipients]
+            result['recipient'] = [item[i] for i in [0, 1] for item in recipients]
+            result['short_recipient'] = [item.split('@')[0] for item in result['clean_recipient']]
+
             subject = message.get('subject')
             result['subject'] = '' if subject is None else subject.decode('iso-8859-1').encode(self.target_encoding)
+
+            raw_date = message.get('date')
+            if raw_date is not None:
+                try:
+                    result['date'] = dateutil.parser.parse(raw_date)
+                except ValueError as valueError:
+                    # todo find a way to deal with these special cases?
+                    # we occasionally get a string the parser won't parse e.g. Wed, 17 Dec 2008 12:35:42 -0700 (GMT-07:00)
+                    # and we need to drop off the trailing time zone and try to parse again
+                    logging.warn('%s %s %s', raw_date, valueError, current_file)
+                    pieces = str(raw_date).split('(')
+                    result['date'] = dateutil.parser.parse(pieces[0])
+            else:
+                # todo add special code to handle these?
+                logging.warn('no date: %s ', message)
 
             text_part = message.text_part
             if text_part is not None and arg_process_text_part:
