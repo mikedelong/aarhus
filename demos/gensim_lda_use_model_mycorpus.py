@@ -41,7 +41,6 @@ with open('./gensim_lda_use_model_mycorpus.json') as data_file:
     input_folder = data['input_folder']
     max_file_count = data['max_file_count']
     model_file_name = data['model_file_name']
-    random_seed = data['random_seed']
 
 model = utils.SaveLoad.load(model_file_name)
 logging.debug('model restored')
