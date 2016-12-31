@@ -50,61 +50,36 @@ with open('./gensim_lda_use_model_mycorpus.json') as data_file:
 
 
 corpus = MmCorpus(corpus_file_name)
+logging.debug(corpus)
 pass
 
 model = utils.SaveLoad.load(model_file_name)
 logging.debug('model restored')
+logging.debug(model)
 
 dictionary = Dictionary.load(dictionary_file_name)
+logging.debug(dictionary)
 
 pass
-#
-# file_names = [os.path.join(root, current) for root, subdirectories, files in os.walk(input_folder) for current in files]
-# logging.debug('we have %d files', len(file_names))
-#
-# if max_file_count < len(file_names) and max_file_count != -1:
-#     file_names = file_names[:max_file_count]
-# logging.debug('we are using %d files', len(file_names))
-#
-# documents = [open(file_name, 'r').read().decode('utf-8', 'ignore').encode('ascii', 'ignore') for file_name in
-#              file_names]
-# logging.debug('documents array has length %d' % len(documents))
-#
-# preprocess = [strip_proppers(document) for document in documents]
-# logging.debug('done stripping propers; result has length %d ', len(preprocess))
-#
-# tokenized_text = [tokenize_and_stem(text) for text in preprocess]
-# logging.debug('done tokenizing; result has length %d', len(tokenized_text))
-# specific_stopwords = ['gmail.com', 'http', 'https', 'mailto', '\'s', 'n\'t', 'hillaryclinton.com', 'googlegroups.com',
-#                       'law.georgetown.edu', 'javascript', 'wrote', 'email']
-# stopwords = nltk.corpus.stopwords.words('english') + specific_stopwords
-# logging.debug('imported stopwords; we have %d of them', len(stopwords))
-# texts = [[word for word in text if word not in stopwords] for text in tokenized_text]
-# logging.debug('after stopword removal result has length %d', len(texts))
-#
-# dictionary = corpora.Dictionary(texts)
-# logging.debug('dictionary has length %d', len(dictionary))
-#
-# dictionary.filter_extremes(no_below=1, no_above=0.8)
-# logging.debug('dictionary has length %d', len(dictionary))
-#
-# corpus = [dictionary.doc2bow(text) for text in texts]
-# logging.debug('corpus size is %d', len(corpus))
-#
-# # todo figure out how to map topic numbers back onto topic word collections
-# # model.print_topics(1)
-#
-# random.seed(random_seed)
-# t0 = random.choice(corpus)
-# t1 = model.get_document_topics(t0)
+
+
+text = u"the quick brown fox jumped over the lazy hound"
+document = tokenize_and_stem(strip_proppers(text))
+logging.debug(document)
+
+t0 = dictionary.doc2bow(document)
+logging.debug(t0)
+
+t1 = model[t0]
+logging.debug(t1)
+
+
 # # todo find a pythonic way to do this
-# max_value = 0.0
-# max_key = 0
-# for item in t1:
-#     if item[1] > max_value:
-#         max_value = item[1]
-#         max_key = item[0]
-# logging.debug(t1)
-# logging.debug(max_key)
-#
-# pass
+max_value = 0.0
+max_key = 0
+for item in t1:
+    if item[1] > max_value:
+        max_value = item[1]
+        max_key = item[0]
+
+logging.debug(max_key)
