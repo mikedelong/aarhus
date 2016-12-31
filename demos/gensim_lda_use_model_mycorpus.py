@@ -1,17 +1,12 @@
 import json
 import logging
-import os
-import random
 import re
 import string
 
 import nltk
-from gensim import corpora
 from gensim import utils
-from nltk.stem.snowball import SnowballStemmer
-from gensim.corpora import TextCorpus
-from gensim.corpora import MmCorpus
 from gensim.corpora import Dictionary
+from nltk.stem.snowball import SnowballStemmer
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s :: %(message)s', level=logging.DEBUG)
 
@@ -48,20 +43,12 @@ with open('./gensim_lda_use_model_mycorpus.json') as data_file:
     model_file_name = data['model_file_name']
     random_seed = data['random_seed']
 
-
-corpus = MmCorpus(corpus_file_name)
-logging.debug(corpus)
-pass
-
 model = utils.SaveLoad.load(model_file_name)
 logging.debug('model restored')
 logging.debug(model)
 
 dictionary = Dictionary.load(dictionary_file_name)
 logging.debug(dictionary)
-
-pass
-
 
 text = u"the quick brown fox jumped over the lazy hound"
 document = tokenize_and_stem(strip_proppers(text))
@@ -73,10 +60,9 @@ logging.debug(t0)
 t1 = model[t0]
 logging.debug(t1)
 
-
 # # todo find a pythonic way to do this
-max_value = 0.0
-max_key = 0
+max_value = -1.0
+max_key = -1
 for item in t1:
     if item[1] > max_value:
         max_value = item[1]
