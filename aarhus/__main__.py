@@ -3,13 +3,21 @@ import hashlib
 import json
 import logging
 import os
+import re
+import string
 import sys
 import time
 
 import bs4
 import elasticsearch
 import elasticsearch.helpers
+import nltk
 import pyzmail
+from nltk.stem.snowball import SnowballStemmer
+from gensim import utils
+from gensim import corpora
+from gensim.corpora import Dictionary
+
 
 # http://mypy.pythonblogs.com/12_mypy/archive/1253_workaround_for_python_bug_ascii_codec_cant_encode_character_uxa0_in_position_111_ordinal_not_in_range128.html
 reload(sys)
@@ -25,10 +33,30 @@ class Importer(object):
         self.process_text_part = arg_process_text_part
         self.process_html_part = arg_process_html_part
         self.process_both_empty = arg_process_both_empty
+        self.stemmer = SnowballStemmer("english")
+
         pass
 
+    # http://brandonrose.org/clustering
+    def strip_proppers(self, arg_text):
+        # first tokenize by sentence, then by word to ensure that punctuation is caught as it's own token
+        tokens = [current_word for sent in nltk.sent_tokenize(arg_text) for current_word in nltk.word_tokenize(sent) if current_word.islower()]
+        return "".join(
+            [" " + i if not i.startswith("'") and i not in string.punctuation else i for i in tokens]).strip()
+
+    def tokenize_and_stem(self, arg_text):
+        # first tokenize by sentence, then by word to ensure that punctuation is caught as it'sown token
+        tokens = [current_word for sent in nltk.sent_tokenize(arg_text) for current_word in nltk.word_tokenize(sent)]
+        filtered_tokens = []
+        # filter out any tokens not containing letters (e.g., numeric tokens, raw punctuation)
+        for token in tokens:
+            if re.search('[a-zA-Z]', token):
+                filtered_tokens.append(token)
+        stems = [self.stemmer.stem(token) for token in filtered_tokens]
+        return stems
+
     def process_folder(self, arg_folder, arg_bulk_upload, arg_document_type, arg_buffer_limit, arg_server,
-                       arg_index_name):
+                       arg_index_name, arg_model, arg_stopwords, arg_dictionary):
         document_count = 0
         document_buffer = []
         indexed_count = 0
@@ -42,7 +70,9 @@ class Importer(object):
                     current_json, document_id = self.get_json(current_full_file_name,
                                                               arg_process_text_part=self.process_text_part,
                                                               arg_process_html_part=self.process_html_part,
-                                                              arg_process_both_empty=self.process_both_empty)
+                                                              arg_process_both_empty=self.process_both_empty,
+                                                              arg_model=arg_model, arg_stopwords=arg_stopwords,
+                                                              arg_dictionary = arg_dictionary)
                     logging.debug(current_json)
                     document_count += 1
                     try:
@@ -63,8 +93,7 @@ class Importer(object):
                                     document_buffer = []
                         else:
                             index_result = arg_server.index(index=arg_index_name, doc_type=arg_document_type,
-                                                            body=current_json,
-                                                            id=document_id)
+                                                            body=current_json, id=document_id)
                             indexed_count += 1
                             logging.debug("id: %s, result: %s", document_id, index_result)
                     except elasticsearch.exceptions.SerializationError as serializationError:
@@ -87,7 +116,8 @@ class Importer(object):
                 result = result.replace(token, ' ')
         return result.lower().strip()
 
-    def get_json(self, current_file, arg_process_text_part, arg_process_html_part, arg_process_both_empty):
+    def get_json(self, current_file, arg_process_text_part, arg_process_html_part, arg_process_both_empty, arg_model,
+                 arg_stopwords, arg_dictionary):
         result = {'original_file': current_file}
         with open(current_file, 'rb') as fp:
             message = pyzmail.message_from_file(fp)
@@ -130,15 +160,33 @@ class Importer(object):
                 payload = text_part.get_payload()
                 if charset is not None:
                     try:
-                        result['body'] = payload.decode(charset, 'ignore').encode(self.target_encoding)
+                        body = payload.decode(charset, 'ignore').encode(self.target_encoding)
                     except LookupError as lookupError:
                         if text_part.charset == 'iso-8859-8-i':
-                            result['body'] = payload.decode('iso-8859-8', 'ignore').encode(self.target_encoding)
+                            body = payload.decode('iso-8859-8', 'ignore').encode(self.target_encoding)
                         else:
-                            result['body'] = payload.decode('utf-8', 'ignore').encode(self.target_encoding)
+                            body = payload.decode('utf-8', 'ignore').encode(self.target_encoding)
                             logging.warn('lookup error %s', lookupError)
                 else:
-                    result['body'] = payload.decode('utf-8', 'ignore').encode(self.target_encoding)
+                    body = payload.decode('utf-8', 'ignore').encode(self.target_encoding)
+                result['body'] = body
+
+                body_ascii = body.decode('utf-8', 'ignore').encode('ascii', 'ignore')
+                body_no_proppers = self.strip_proppers(body_ascii)
+                tokenized_text = self.tokenize_and_stem(body_no_proppers)
+                document = [word for word in tokenized_text if word not in arg_stopwords]
+                basket_of_words = arg_dictionary.doc2bow(document)
+                topics = arg_model[basket_of_words]
+                # todo find a pythonic way to do this
+                max_value = 0.0
+                max_key = 0
+                for item in topics:
+                    if item[1] > max_value:
+                        max_value = item[1]
+                        max_key = item[0]
+                result['lda_topic'] = max_key
+
+
             elif message.html_part is not None and arg_process_html_part:
                 payload = message.html_part.part.get_payload()
                 payload_text = bs4.BeautifulSoup(payload, 'lxml').get_text().strip()
@@ -174,15 +222,23 @@ def run():
         elasticsearch_index_name = data['elasticsearch_index_name']
         elasticsearch_document_type = data['elasticsearch_document_type']
         elasticsearch_batch_size = data['elasticsearch_batch_size']
+        lda_model_file_name = data['lda_model_file_name']
+        lda_dictionary_file_name = data['lda_dictionary_file_name']
 
-        # get the connection to elasticsearch
-        elasticsearch_server = elasticsearch.Elasticsearch([{'host': elasticsearch_host, 'port': elasticsearch_port}])
+    # get the connection to elasticsearch
+    elasticsearch_server = elasticsearch.Elasticsearch([{'host': elasticsearch_host, 'port': elasticsearch_port}])
 
-        if elasticsearch_server.indices.exists(elasticsearch_index_name):
-            elasticsearch_server.indices.delete(elasticsearch_index_name)
-        elasticsearch_server.indices.create(elasticsearch_index_name)
+    if elasticsearch_server.indices.exists(elasticsearch_index_name):
+        elasticsearch_server.indices.delete(elasticsearch_index_name)
+    elasticsearch_server.indices.create(elasticsearch_index_name)
 
-    # todo add mapping
+    lda_model = utils.SaveLoad.load(lda_model_file_name)
+    lda_dictionary = Dictionary.load(lda_dictionary_file_name)
+    specific_stopwords = ['gmail.com', 'http', 'https', 'mailto', '\'s', 'n\'t', 'hillaryclinton.com',
+                          'googlegroups.com',
+                          'law.georgetown.edu', 'javascript', 'wrote', 'email']
+    stopwords = nltk.corpus.stopwords.words('english') + specific_stopwords
+
     mapping = {
         elasticsearch_document_type: {
             'properties': {
@@ -240,7 +296,7 @@ def run():
     instance = Importer(arg_document_count_limit=document_count_limit, arg_process_text_part=process_text_part,
                         arg_process_html_part=process_html_part, arg_process_both_empty=process_both_empty)
     instance.process_folder(input_folder, True, elasticsearch_document_type, elasticsearch_batch_size,
-                            elasticsearch_server, elasticsearch_index_name)
+                            elasticsearch_server, elasticsearch_index_name, lda_model, stopwords, lda_dictionary)
 
     finish_time = time.time()
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
