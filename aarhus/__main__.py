@@ -13,11 +13,10 @@ import elasticsearch
 import elasticsearch.helpers
 import nltk
 import pyzmail
-from nltk.stem.snowball import SnowballStemmer
 from gensim import utils
-from gensim import corpora
 from gensim.corpora import Dictionary
-
+from gensim.models import LsiModel
+from nltk.stem.snowball import SnowballStemmer
 
 # http://mypy.pythonblogs.com/12_mypy/archive/1253_workaround_for_python_bug_ascii_codec_cant_encode_character_uxa0_in_position_111_ordinal_not_in_range128.html
 reload(sys)
@@ -40,7 +39,8 @@ class Importer(object):
     # http://brandonrose.org/clustering
     def strip_proppers(self, arg_text):
         # first tokenize by sentence, then by word to ensure that punctuation is caught as it's own token
-        tokens = [current_word for sent in nltk.sent_tokenize(arg_text) for current_word in nltk.word_tokenize(sent) if current_word.islower()]
+        tokens = [current_word for sent in nltk.sent_tokenize(arg_text) for current_word in nltk.word_tokenize(sent) if
+                  current_word.islower()]
         return "".join(
             [" " + i if not i.startswith("'") and i not in string.punctuation else i for i in tokens]).strip()
 
@@ -56,7 +56,8 @@ class Importer(object):
         return stems
 
     def process_folder(self, arg_folder, arg_bulk_upload, arg_document_type, arg_buffer_limit, arg_server,
-                       arg_index_name, arg_model, arg_stopwords, arg_dictionary):
+                       arg_index_name, arg_lda_model, arg_stopwords, arg_lda_dictionary, arg_lsi_model,
+                       arg_lsi_dictionary):
         document_count = 0
         document_buffer = []
         indexed_count = 0
@@ -71,8 +72,10 @@ class Importer(object):
                                                               arg_process_text_part=self.process_text_part,
                                                               arg_process_html_part=self.process_html_part,
                                                               arg_process_both_empty=self.process_both_empty,
-                                                              arg_model=arg_model, arg_stopwords=arg_stopwords,
-                                                              arg_dictionary = arg_dictionary)
+                                                              arg_lda_model=arg_lda_model, arg_stopwords=arg_stopwords,
+                                                              arg_lda_dictionary=arg_lda_dictionary,
+                                                              arg_lsi_model=arg_lsi_model,
+                                                              arg_lsi_dictionary=arg_lsi_dictionary)
                     logging.debug(current_json)
                     document_count += 1
                     try:
@@ -116,8 +119,9 @@ class Importer(object):
                 result = result.replace(token, ' ')
         return result.lower().strip()
 
-    def get_json(self, current_file, arg_process_text_part, arg_process_html_part, arg_process_both_empty, arg_model,
-                 arg_stopwords, arg_dictionary):
+    def get_json(self, current_file, arg_process_text_part, arg_process_html_part, arg_process_both_empty,
+                 arg_lda_model,
+                 arg_stopwords, arg_lda_dictionary, arg_lsi_model, arg_lsi_dictionary):
         result = {'original_file': current_file}
         with open(current_file, 'rb') as fp:
             message = pyzmail.message_from_file(fp)
@@ -175,16 +179,29 @@ class Importer(object):
                 body_no_proppers = self.strip_proppers(body_ascii)
                 tokenized_text = self.tokenize_and_stem(body_no_proppers)
                 document = [word for word in tokenized_text if word not in arg_stopwords]
-                basket_of_words = arg_dictionary.doc2bow(document)
-                topics = arg_model[basket_of_words]
+
+                # todo factor this into a function
+                lda_basket_of_words = arg_lda_dictionary.doc2bow(document)
+                lda_topics = arg_lda_model[lda_basket_of_words]
                 # todo find a pythonic way to do this
                 max_value = 0.0
                 max_key = 0
-                for item in topics:
+                for item in lda_topics:
                     if item[1] > max_value:
                         max_value = item[1]
                         max_key = item[0]
                 result['lda_topic'] = max_key
+
+                lsi_basket_of_words = arg_lsi_dictionary.doc2bow(document)
+                lsi_topics = arg_lsi_model[lsi_basket_of_words]
+                # todo find a pythonic way to do this
+                max_value = 0.0
+                max_key = 0
+                for item in lsi_topics:
+                    if item[1] > max_value:
+                        max_value = item[1]
+                        max_key = item[0]
+                result['lsi_topic'] = max_key
 
 
             elif message.html_part is not None and arg_process_html_part:
@@ -224,6 +241,8 @@ def run():
         elasticsearch_batch_size = data['elasticsearch_batch_size']
         lda_model_file_name = data['lda_model_file_name']
         lda_dictionary_file_name = data['lda_dictionary_file_name']
+        lsi_model_file_name = data['lsi_model_file_name']
+        lsi_dictionary_file_name = data['lsi_dictionary_file_name']
 
     # get the connection to elasticsearch
     elasticsearch_server = elasticsearch.Elasticsearch([{'host': elasticsearch_host, 'port': elasticsearch_port}])
@@ -234,6 +253,9 @@ def run():
 
     lda_model = utils.SaveLoad.load(lda_model_file_name)
     lda_dictionary = Dictionary.load(lda_dictionary_file_name)
+    lsi_model = LsiModel.load(lsi_model_file_name)
+    lsi_dictionary = Dictionary.load(lsi_dictionary_file_name)
+
     specific_stopwords = ['gmail.com', 'http', 'https', 'mailto', '\'s', 'n\'t', 'hillaryclinton.com',
                           'googlegroups.com',
                           'law.georgetown.edu', 'javascript', 'wrote', 'email']
@@ -296,7 +318,8 @@ def run():
     instance = Importer(arg_document_count_limit=document_count_limit, arg_process_text_part=process_text_part,
                         arg_process_html_part=process_html_part, arg_process_both_empty=process_both_empty)
     instance.process_folder(input_folder, True, elasticsearch_document_type, elasticsearch_batch_size,
-                            elasticsearch_server, elasticsearch_index_name, lda_model, stopwords, lda_dictionary)
+                            elasticsearch_server, elasticsearch_index_name, lda_model, stopwords, lda_dictionary,
+                            lsi_model, lsi_dictionary)
 
     finish_time = time.time()
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
