@@ -16,7 +16,7 @@ stemmer = SnowballStemmer("english")
 
 
 def strip_proppers(arg_text):
-    # first tokenize by sentence, then by word to ensure that punctuation is caught as it'sown token
+    # first tokenize by sentence, then by word to ensure that punctuation is caught as it's own token
     tokens = [current_word for sent in nltk.sent_tokenize(arg_text) for current_word in nltk.word_tokenize(sent)
               if current_word.islower()]
     return "".join([" " + i if not i.startswith("'") and i not in string.punctuation else i for i in tokens]).strip()
