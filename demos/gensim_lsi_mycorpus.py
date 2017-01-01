@@ -32,11 +32,28 @@ def tokenize_and_stem(text):
     return stems
 
 
-class MyCorpus(corpora.TextCorpus):
+def get_stopwords():
+    # here we try to de-noise by removing tokens we've seen in previous topics with this corpus that we suspect
+    # are email artifacts and do not represent any topic semantics
+    # 15(667.195): -0.479*"hrcoffice.com" + -0.213*"john.podesta" + -0.199*"gmmb.com" + 0.196*"health" + 0.186*"group" + -0.185*"bsgco.com" + -0.167*"would" + 0.157*"care" + -0.139*"dschwerin" + -0.138*"aol.com"
     specific_stopwords = ['gmail.com', 'http', 'https', 'mailto', '\'s', 'n\'t', 'hillaryclinton.com',
-                          'googlegroups.com',
-                          'law.georgetown.edu', 'javascript', 'wrote', 'email']
-    stopwords = nltk.corpus.stopwords.words('english') + specific_stopwords
+                          'googlegroups.com', 'law.georgetown.edu', 'javascript', 'wrote', 'email', 'hrcoffice.com',
+                          'john.podesta', 'gmmb.com', 'bsgco.com', 'dschwerin', 'aol.com', '//r20.rs6.net/tn.jsp']
+
+    # 0(88184.071): 0.494*"lt" + 0.488*"gt" + 0.377*"span" + 0.373*"/span" + 0.348*"br" + 0.218*"amp" + 0.122*"nbsp" + 0.119*"cite" + 0.112*"blockquot" + 0.111*"/blockquot"
+    # 4(1275.315): -0.372*"style=" + -0.266*"class=" + -0.250*"width=" + -0.220*"td" + -0.220*"/td" + -0.220*"tr" + -0.220*"/tr" + -0.158*"color" + -0.153*"said" + -0.143*"/strong"
+
+    html_stopwords = ['lt', 'gt', 'span', '/span', 'br', 'amp', 'nbsp', 'blockquot', 'cite', '/blockquote',
+                      'style=', 'class=', 'width=', 'td', '/td', 'tr', '/tr', '/strong']
+
+    common_words_to_ignore = ['say', 'said', 'would']
+
+    stopwords = nltk.corpus.stopwords.words('english') + specific_stopwords + html_stopwords + common_words_to_ignore
+    return stopwords
+
+
+class MyCorpus(corpora.TextCorpus):
+    stopwords = get_stopwords()
 
     def get_texts(self):
         for filename in self.input:  # for each relevant file
@@ -72,7 +89,8 @@ corpus.dictionary.save(dictionary_file_name)
 
 corpora.MmCorpus.save_corpus(corpus_file_name, corpus)
 
-model = models.LsiModel(corpus, num_topics=topics_count, id2word=corpus.dictionary, chunksize=20000, distributed=False, onepass=True)
+model = models.LsiModel(corpus, num_topics=topics_count, id2word=corpus.dictionary, chunksize=20000, distributed=False,
+                        onepass=True)
 
 logging.debug('built LSI model')
 
