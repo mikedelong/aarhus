@@ -119,6 +119,19 @@ class Importer(object):
                 result = result.replace(token, ' ')
         return result.lower().strip()
 
+    def get_topic_for_document(self, arg_document, arg_model, arg_dictionary):
+        # todo factor this into a function
+        basket_of_words = arg_dictionary.doc2bow(arg_document)
+        topics = arg_model[basket_of_words]
+        # todo find a pythonic way to do this
+        max_value = 0.0
+        max_key = 0
+        for item in topics:
+            if item[1] > max_value:
+                max_value = item[1]
+                max_key = item[0]
+        return max_key
+
     def get_json(self, current_file, arg_process_text_part, arg_process_html_part, arg_process_both_empty,
                  arg_lda_model,
                  arg_stopwords, arg_lda_dictionary, arg_lsi_model, arg_lsi_dictionary):
@@ -180,30 +193,10 @@ class Importer(object):
                 tokenized_text = self.tokenize_and_stem(body_no_proppers)
                 document = [word for word in tokenized_text if word not in arg_stopwords]
 
-                # todo factor this into a function
-                lda_basket_of_words = arg_lda_dictionary.doc2bow(document)
-                lda_topics = arg_lda_model[lda_basket_of_words]
-                # todo find a pythonic way to do this
-                max_value = 0.0
-                max_key = 0
-                for item in lda_topics:
-                    if item[1] > max_value:
-                        max_value = item[1]
-                        max_key = item[0]
-                result['lda_topic'] = max_key
-
-                lsi_basket_of_words = arg_lsi_dictionary.doc2bow(document)
-                lsi_topics = arg_lsi_model[lsi_basket_of_words]
-                # todo find a pythonic way to do this
-                max_value = 0.0
-                max_key = 0
-                for item in lsi_topics:
-                    if item[1] > max_value:
-                        max_value = item[1]
-                        max_key = item[0]
-                result['lsi_topic'] = max_key
-
-
+                lda_topic = self.get_topic_for_document(document, arg_lda_model, arg_lda_dictionary)
+                result['lda_topic'] = lda_topic
+                lsi_topic = self.get_topic_for_document(document, arg_lsi_model, arg_lsi_dictionary)
+                result['lsi_topic'] = lsi_topic
             elif message.html_part is not None and arg_process_html_part:
                 payload = message.html_part.part.get_payload()
                 payload_text = bs4.BeautifulSoup(payload, 'lxml').get_text().strip()
