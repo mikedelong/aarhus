@@ -36,10 +36,7 @@ with open('./gensim_lda_use_model_mycorpus.json') as data_file:
     data = json.load(data_file)
     logging.debug(data)
 
-    corpus_file_name = data['corpus_file_name']
     dictionary_file_name = data['dictionary_file_name']
-    input_folder = data['input_folder']
-    max_file_count = data['max_file_count']
     model_file_name = data['model_file_name']
 
 model = utils.SaveLoad.load(model_file_name)
