@@ -43,6 +43,7 @@ with open('./gensim_lda_input.json') as data_file:
     top_words_count = data['top_words_count']
     lda_passes = data['passes']
     model_file_name = data['model_file_name']
+    dictionary_file_name = data['dictionary_file_name']
 
 file_names = [os.path.join(root, current) for root, subdirectories, files in os.walk(input_folder) for current in files]
 logging.debug('we have %d files', len(file_names))
@@ -78,9 +79,12 @@ logging.debug('dictionary has length %d', len(dictionary))
 
 dictionary.filter_extremes(no_below=1, no_above=0.8)
 logging.debug('dictionary has length %d', len(dictionary))
+dictionary.save(dictionary_file_name)
+logging.debug('saved dictionary as %s' % dictionary_file_name)
 
 corpus = [dictionary.doc2bow(text) for text in texts]
 logging.debug('corpus size is %d', len(corpus))
+
 
 model = models.LdaModel(corpus, num_topics=topics_count, id2word=dictionary, update_every=5, chunksize=10000,
                         passes=lda_passes, distributed=False, random_state=0)
