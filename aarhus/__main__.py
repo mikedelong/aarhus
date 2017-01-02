@@ -36,14 +36,16 @@ class Importer(object):
 
         pass
 
-    # http://brandonrose.org/clustering
+    # http://brandonrose.org/clustering (with some modifications)
     def strip_proppers(self, arg_text):
-        # first tokenize by sentence, then by word to ensure that punctuation is caught as it's own token
-        tokens = [current_word for sent in nltk.sent_tokenize(arg_text) for current_word in nltk.word_tokenize(sent) if
-                  current_word.islower()]
+        # first tokenize by sentence, then by word to ensure that punctuation is caught as it'sown token
+        tokens = [word for sent in nltk.sent_tokenize(arg_text) for word in nltk.word_tokenize(sent)
+                  if word.islower()]
         return "".join(
-            [" " + i if not i.startswith("'") and i not in string.punctuation else i for i in tokens]).strip()
+            [" " + i if not i.startswith("'") and not i.startswith("/") and not i.endswith(
+                "=") and i not in string.punctuation else i for i in tokens]).strip()
 
+    # http://brandonrose.org/clustering
     def tokenize_and_stem(self, arg_text):
         # first tokenize by sentence, then by word to ensure that punctuation is caught as it'sown token
         tokens = [current_word for sent in nltk.sent_tokenize(arg_text) for current_word in nltk.word_tokenize(sent)]
@@ -220,18 +222,20 @@ def get_stopwords():
     # 15(667.195): -0.479*"hrcoffice.com" + -0.213*"john.podesta" + -0.199*"gmmb.com" + 0.196*"health" + 0.186*"group" + -0.185*"bsgco.com" + -0.167*"would" + 0.157*"care" + -0.139*"dschwerin" + -0.138*"aol.com"
     specific_stopwords = ['gmail.com', 'http', 'https', 'mailto', '\'s', 'n\'t', 'hillaryclinton.com',
                           'googlegroups.com', 'law.georgetown.edu', 'javascript', 'wrote', 'email', 'hrcoffice.com',
-                          'john.podesta', 'gmmb.com', 'bsgco.com', 'dschwerin', 'aol.com', '//r20.rs6.net/tn.jsp']
+                          'john.podesta', 'gmmb.com', 'bsgco.com', 'dschwerin', 'aol.com']
 
     # 0(88184.071): 0.494*"lt" + 0.488*"gt" + 0.377*"span" + 0.373*"/span" + 0.348*"br" + 0.218*"amp" + 0.122*"nbsp" + 0.119*"cite" + 0.112*"blockquot" + 0.111*"/blockquot"
     # 4(1275.315): -0.372*"style=" + -0.266*"class=" + -0.250*"width=" + -0.220*"td" + -0.220*"/td" + -0.220*"tr" + -0.220*"/tr" + -0.158*"color" + -0.153*"said" + -0.143*"/strong"
 
-    html_stopwords = ['lt', 'gt', 'span', '/span', 'br', 'amp', 'nbsp', 'blockquot', 'cite', '/blockquote',
-                      'style=', 'class=', 'width=', 'td', '/td', 'tr', '/tr', '/strong']
+    html_stopwords = ['lt', 'gt', 'span', 'br', 'amp', 'nbsp', 'blockquot', 'cite', 'td', 'tr', 'strong/strong', 'tabl',
+                      'tbodi', 'lt/span', 'rgba', 'lt/blockquot', 'background-color', 'lt/div', 'lt/span', 'span/span',
+                      'br/blockquot', 'media__imag']
 
     common_words_to_ignore = ['say', 'said', 'would']
 
     stopwords = nltk.corpus.stopwords.words('english') + specific_stopwords + html_stopwords + common_words_to_ignore
     return stopwords
+
 
 def run():
     start_time = time.time()
