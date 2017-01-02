@@ -37,19 +37,18 @@ def tokenize_and_stem(text):
 def get_stopwords():
     # here we try to de-noise by removing tokens we've seen in previous topics with this corpus that we suspect
     # are email artifacts and do not represent any topic semantics
-    # 15(667.195): -0.479*"hrcoffice.com" + -0.213*"john.podesta" + -0.199*"gmmb.com" + 0.196*"health" + 0.186*"group" + -0.185*"bsgco.com" + -0.167*"would" + 0.157*"care" + -0.139*"dschwerin" + -0.138*"aol.com"
-    specific_stopwords = ['gmail.com', 'http', 'https', 'mailto', '\'s', 'n\'t', 'hillaryclinton.com',
+    specific_stopwords = ['gmail.com', 'http', 'https', 'mailto', '3cmailto', '\'s', 'n\'t', 'hillaryclinton.com',
                           'googlegroups.com', 'law.georgetown.edu', 'javascript', 'wrote', 'email', 'hrcoffice.com',
                           'john.podesta', 'gmmb.com', 'bsgco.com', 'dschwerin', 'aol.com']
 
-    # 0(88184.071): 0.494*"lt" + 0.488*"gt" + 0.377*"span" + 0.373*"/span" + 0.348*"br" + 0.218*"amp" + 0.122*"nbsp" + 0.119*"cite" + 0.112*"blockquot" + 0.111*"/blockquot"
-    # 4(1275.315): -0.372*"style=" + -0.266*"class=" + -0.250*"width=" + -0.220*"td" + -0.220*"/td" + -0.220*"tr" + -0.220*"/tr" + -0.158*"color" + -0.153*"said" + -0.143*"/strong"
-
     html_stopwords = ['lt', 'gt', 'span', 'br', 'amp', 'nbsp', 'blockquot', 'cite', 'td', 'tr', 'strong/strong', 'tabl',
                       'tbodi', 'lt/span', 'rgba', 'lt/blockquot', 'background-color', 'lt/div', 'lt/span', 'span/span',
-                      'br/blockquot', 'media__imag']
+                      'br/blockquot', 'media__imag', 'blockquotetype=', 'nbsp/span', 'gt/span', 'rgba/span', 'lt/p',
+                      '0in', 'div', 'p', 'n', 'e', '0pt', 'margin-bottom', '-webkit-composition-fill-color', '2f', '3a',
+                      'redirect=http', '2fgmf-pillar', 'media__imagesrc=', 'imgalt=', '3e', 'font-weight', 'font-vari',
+                      'font-style', 'font-size:14.666666666666666px', 'white-spac']
 
-    common_words_to_ignore = ['say', 'said', 'would']
+    common_words_to_ignore = ['say', 'said', 'would', 'go', 'also']
 
     stopwords = nltk.corpus.stopwords.words('english') + specific_stopwords + html_stopwords + common_words_to_ignore
     return stopwords
