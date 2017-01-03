@@ -11,7 +11,7 @@ if os.path.isfile(html_stopwords_file_name):
     logging.debug('loading html stopwords from %s' % html_stopwords_file_name)
     with open(html_stopwords_file_name, 'rb') as csv_file:
         csv_reader = csv.reader(csv_file)
-        html_stopwords = [item for item in csv_reader]
+        html_stopwords = [unicode(item[0]) for item in csv_reader]
 else:
     logging.debug('loading no html stopwords')
     html_stopwords = []
@@ -21,7 +21,7 @@ if os.path.isfile(specific_stopwords_file_name):
     logging.debug('loading case-specific stopwords from %s' % specific_stopwords_file_name)
     with open(specific_stopwords_file_name, 'rb') as csv_file:
         csv_reader = csv.reader(csv_file)
-        specific_stopwords = [item for item in csv_reader]
+        specific_stopwords = [unicode(item[0]) for item in csv_reader]
 else:
     logging.debug('loading no case-specific stopwords')
     specific_stopwords = []
@@ -31,7 +31,7 @@ if os.path.isfile(ignore_words_file_name):
     logging.debug('loading common words to ignore from %s' % ignore_words_file_name)
     with open(ignore_words_file_name) as csv_file:
         csv_reader = csv.reader(csv_file)
-        common_words_to_ignore = [item for item in csv_reader]
+        common_words_to_ignore = [unicode(item[0]) for item in csv_reader]
 else:
     logging.debug('loading no common words to ignore list')
     common_words_to_ignore = []
