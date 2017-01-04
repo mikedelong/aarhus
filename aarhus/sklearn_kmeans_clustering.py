@@ -10,6 +10,8 @@ from nltk.stem.snowball import SnowballStemmer
 from sklearn.cluster import KMeans
 from sklearn.feature_extraction.text import TfidfVectorizer
 
+from aarhus.aarhus import custom_stopwords
+
 logging.basicConfig(format='%(asctime)s : %(levelname)s :: %(message)s', level=logging.DEBUG)
 
 stemmer = SnowballStemmer("english")
@@ -36,26 +38,6 @@ def tokenize_and_stem(text):
     return stems
 
 
-def get_stopwords():
-    # here we try to de-noise by removing tokens we've seen in previous topics with this corpus that we suspect
-    # are email artifacts and do not represent any topic semantics
-    specific_stopwords = ['gmail.com', 'http', 'https', 'mailto', '3cmailto', '\'s', 'n\'t', 'hillaryclinton.com',
-                          'googlegroups.com', 'law.georgetown.edu', 'javascript', 'wrote', 'email', 'hrcoffice.com',
-                          'john.podesta', 'gmmb.com', 'bsgco.com', 'dschwerin', 'aol.com']
-
-    html_stopwords = ['lt', 'gt', 'span', 'br', 'amp', 'nbsp', 'blockquot', 'cite', 'td', 'tr', 'strong/strong', 'tabl',
-                      'tbodi', 'lt/span', 'rgba', 'lt/blockquot', 'background-color', 'lt/div', 'lt/span', 'span/span',
-                      'br/blockquot', 'media__imag', 'blockquotetype=', 'nbsp/span', 'gt/span', 'rgba/span', 'lt/p',
-                      '0in', 'div', 'p', 'n', 'e', '0pt', 'margin-bottom', '-webkit-composition-fill-color', '2f', '3a',
-                      'redirect=http', '2fgmf-pillar', 'media__imagesrc=', 'imgalt=', '3e', 'font-weight', 'font-vari',
-                      'font-style', 'font-size:14.666666666666666px', 'white-spac']
-
-    common_words_to_ignore = ['say', 'said', 'would', 'go', 'also']
-
-    stopwords = nltk.corpus.stopwords.words('english') + specific_stopwords + html_stopwords + common_words_to_ignore
-    return stopwords
-
-
 with open('./sklearn_kmeans_clustering.json') as data_file:
     data = json.load(data_file)
     logging.debug(data)
@@ -64,6 +46,8 @@ with open('./sklearn_kmeans_clustering.json') as data_file:
     # model_file_name = data['model_file_name']
     cluster_count = data['cluster_count']
     random_state = data['random_state']
+
+stopwords = custom_stopwords.get_stopwords()
 
 file_names = [os.path.join(root, current) for root, subdirectories, files in os.walk(input_folder) for current in files]
 logging.debug('we have %d files', len(file_names))
@@ -93,7 +77,7 @@ for item in clusters:
 
 logging.debug(cluster_counter)
 logging.debug('smallest cluster has %d items; largest cluster has %d items' % (
-min(cluster_counter.values()), max(cluster_counter.values())))
+    min(cluster_counter.values()), max(cluster_counter.values())))
 
 result = {}
 for item in zip(file_names, clusters):
