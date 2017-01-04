@@ -1,18 +1,13 @@
-import sys
-
 import unittest
-import aarhus
+
 from aarhus.aarhus import custom_stopwords
-import aarhus.aarhus.custom_stopwords
-from nose.tools import *
 
-def setup():
-    print "SETUP!"
 
-def teardown():
-    print "TEAR DOWN!"
+class TestStopwords(unittest.TestCase):
+    def test_basic(self):
+        stopwords = custom_stopwords.get_stopwords()
+        print (stopwords)
 
-def test_basic():
-    stopwords = custom_stopwords.stopwords()
-    print (stopwords)
 
+if __name__ == '__main__':
+    unittest.main()
