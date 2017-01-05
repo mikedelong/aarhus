@@ -61,7 +61,7 @@ class Importer(object):
 
     def process_folder(self, arg_folder, arg_bulk_upload, arg_document_type, arg_buffer_limit, arg_server,
                        arg_index_name, arg_lda_model, arg_stopwords, arg_lda_dictionary, arg_lsi_model,
-                       arg_lsi_dictionary, arg_kmeans_cluster_dictionary):
+                       arg_lsi_dictionary, arg_kmeans_cluster_dictionary, arg_unanalyzed_senders):
         document_count = 0
         document_buffer = []
         indexed_count = 0
@@ -70,7 +70,7 @@ class Importer(object):
             for current in files:
                 if document_count < self.document_count_limit:
                     current_full_file_name = os.path.join(root, current)
-                    logging.debug("%d %s", document_count, current_full_file_name)
+                    # logging.debug("%d %s", document_count, current_full_file_name)
 
                     current_json, document_id = self.get_json(current_full_file_name,
                                                               arg_process_text_part=self.process_text_part,
@@ -80,8 +80,9 @@ class Importer(object):
                                                               arg_lda_dictionary=arg_lda_dictionary,
                                                               arg_lsi_model=arg_lsi_model,
                                                               arg_lsi_dictionary=arg_lsi_dictionary,
-                                                              arg_kmeans_cluster_dictionary=arg_kmeans_cluster_dictionary)
-                    logging.debug(current_json)
+                                                              arg_kmeans_cluster_dictionary=arg_kmeans_cluster_dictionary,
+                                                              arg_unanalyzed_senders=arg_unanalyzed_senders)
+                    # logging.debug(current_json)
                     document_count += 1
                     try:
                         if arg_bulk_upload:
@@ -93,7 +94,7 @@ class Importer(object):
                                     index_result = elasticsearch.helpers.bulk(arg_server, document_buffer,
                                                                               index=arg_index_name,
                                                                               request_timeout=1000)
-                                    logging.debug(index_result)
+                                    # logging.debug(index_result)
                                     indexed_count += len(document_buffer)
                                     document_buffer = []
                                 except elasticsearch.exceptions.ConnectionTimeout as connectionTimeout:
@@ -139,7 +140,7 @@ class Importer(object):
 
     def get_json(self, current_file, arg_process_text_part, arg_process_html_part, arg_process_both_empty,
                  arg_lda_model, arg_stopwords, arg_lda_dictionary, arg_lsi_model, arg_lsi_dictionary,
-                 arg_kmeans_cluster_dictionary):
+                 arg_kmeans_cluster_dictionary, arg_unanalyzed_senders):
         result = {'original_file': current_file}
         with open(current_file, 'rb') as fp:
             message = pyzmail.message_from_file(fp)
@@ -147,7 +148,8 @@ class Importer(object):
             senders = message.get_addresses('from')
             result['sender'] = [item[i] for i in [0, 1] for item in senders]
             result['short_sender'] = [item.split('@')[0] for item in result['sender']]
-            result['clean_sender'] = [self.clean_address(item[1]) for item in senders]
+            clean_senders = [self.clean_address(item[1]) for item in senders]
+            result['clean_sender'] = clean_senders
 
             # todo clean up internal whitespace
             recipients = message.get_addresses('to') + message.get_addresses('cc') + message.get_addresses('bcc')
@@ -198,12 +200,14 @@ class Importer(object):
                 tokenized_text = self.tokenize_and_stem(body_no_proppers)
                 document = [word for word in tokenized_text if word not in arg_stopwords]
 
-                lda_topic = self.get_topic_for_document(document, arg_lda_model, arg_lda_dictionary)
-                result['lda_topic'] = lda_topic
-                lsi_topic = self.get_topic_for_document(document, arg_lsi_model, arg_lsi_dictionary)
-                result['lsi_topic'] = lsi_topic
-                short_file_name = os.path.basename(current_file)
-                result['kmeans_cluster'] = arg_kmeans_cluster_dictionary[short_file_name]
+                if len(set(clean_senders) & arg_unanalyzed_senders) != 0:
+                    lda_topic = self.get_topic_for_document(document, arg_lda_model, arg_lda_dictionary)
+                    result['lda_topic'] = lda_topic
+                    lsi_topic = self.get_topic_for_document(document, arg_lsi_model, arg_lsi_dictionary)
+                    result['lsi_topic'] = lsi_topic
+                    short_file_name = os.path.basename(current_file)
+                    result['kmeans_cluster'] = arg_kmeans_cluster_dictionary[short_file_name]
+
             elif message.html_part is not None and arg_process_html_part:
                 payload = message.html_part.part.get_payload()
                 payload_text = bs4.BeautifulSoup(payload, 'lxml').get_text().strip()
@@ -214,14 +218,11 @@ class Importer(object):
             else:
                 logging.warn('not processing %s', current_file)
 
-
             md5 = hashlib.md5()
             with open(current_file, 'rb') as fp:
                 md5.update(fp.read())
 
             return result, md5.hexdigest()
-
-
 
 
 def run():
@@ -262,6 +263,8 @@ def run():
     kmeans_cluster_dictionary = json.load(open(kmeans_cluster_file_name, 'r'))
 
     stopwords = custom_stopwords.get_stopwords()
+    unanalyzed_senders = custom_stopwords.get_unanalyzed_senders()
+    unanalyzed_senders = set(unanalyzed_senders)
 
     mapping = {
         elasticsearch_document_type: {
@@ -321,7 +324,7 @@ def run():
                         arg_process_html_part=process_html_part, arg_process_both_empty=process_both_empty)
     instance.process_folder(input_folder, True, elasticsearch_document_type, elasticsearch_batch_size,
                             elasticsearch_server, elasticsearch_index_name, lda_model, stopwords, lda_dictionary,
-                            lsi_model, lsi_dictionary, kmeans_cluster_dictionary)
+                            lsi_model, lsi_dictionary, kmeans_cluster_dictionary, unanalyzed_senders)
 
     finish_time = time.time()
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)

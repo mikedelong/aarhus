@@ -10,9 +10,21 @@ from nltk.stem.snowball import SnowballStemmer
 
 import custom_stopwords
 
+import pyzmail
+
 logging.basicConfig(format='%(asctime)s : %(levelname)s :: %(message)s', level=logging.DEBUG)
 
 stemmer = SnowballStemmer("english")
+
+# https://groups.google.com/forum/#!topic/microsoft.public.outlookexpress.general/oig7-xNFISg
+clean_address_tokens = ['=?us-ascii?Q?', '=0D=0A_=28', '=?utf-8?Q?', '=29?=', '=0D=0A']
+
+def clean_address(arg_value):
+    result = str(arg_value)
+    for token in clean_address_tokens:
+        if token in result:
+            result = result.replace(token, ' ')
+    return result.lower().strip()
 
 
 def strip_proppers(text):
@@ -48,6 +60,42 @@ class MyCorpus(corpora.TextCorpus):
             result = [word for word in t3 if word not in self.stopwords]
             yield result
 
+target_encoding = 'utf-8'
+def filter_file_by_content(arg_file_name, arg_senders):
+    with open(arg_file_name, 'rb') as fp:
+        message = pyzmail.message_from_file(fp)
+        # todo clean up internal whitespace
+        senders = message.get_addresses('from')
+        clean_senders = [clean_address(item[1]) for item in senders]
+
+        if len(set(clean_senders) & arg_senders) != 0:
+            return None
+
+        text_part = message.text_part
+        if text_part is not None:
+            charset = text_part.charset
+            payload = text_part.get_payload()
+            if charset is not None:
+                try:
+                    body = payload.decode(charset, 'ignore').encode(target_encoding)
+                except LookupError as lookupError:
+                    if text_part.charset == 'iso-8859-8-i':
+                        body = payload.decode('iso-8859-8', 'ignore').encode(target_encoding)
+                    else:
+                        body = payload.decode('utf-8', 'ignore').encode(target_encoding)
+                        logging.warn('lookup error %s', lookupError)
+            else:
+                body = payload.decode('utf-8', 'ignore').encode(target_encoding)
+
+            body_ascii = body.decode('utf-8', 'ignore').encode('ascii', 'ignore')
+
+            return body_ascii
+        else:
+            return None
+
+stopwords = custom_stopwords.get_stopwords()
+unanalyzed_senders = custom_stopwords.get_unanalyzed_senders()
+unanalyzed_senders = set(unanalyzed_senders)
 
 with open('./gensim_lsi_mycorpus.json') as data_file:
     data = json.load(data_file)
@@ -66,6 +114,9 @@ logging.debug('we have %d files', len(file_names))
 if max_file_count < len(file_names) and max_file_count != -1:
     file_names = file_names[:max_file_count]
 logging.debug('we are using %d files', len(file_names))
+
+file_names = [file_name for file_name in file_names if filter_file_by_content(file_name, unanalyzed_senders) is not None]
+logging.debug('after filtering we are using %d files', len(file_names))
 
 corpus = MyCorpus([file_name for file_name in file_names])
 
