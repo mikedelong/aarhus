@@ -14,6 +14,12 @@ import gensim.utils
 import numpy
 from gensim import corpora, models, similarities
 
+import glob
+from nltk.stem.snowball import SnowballStemmer
+from nltk.corpus import stopwords
+
+stemmer = SnowballStemmer("english")
+
 data_dir = os.path.join(os.getcwd(), 'data')
 work_dir = os.path.join(os.getcwd(), 'model', os.path.basename(__file__).rstrip('.py'))
 if not os.path.exists(work_dir):
@@ -27,9 +33,12 @@ logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=lo
 # convert to unicode
 def to_unicode(text):
     if not isinstance(text, unicode):
-        text = text.decode('utf-8')
+        text = text.decode('utf-8', 'ignore').lower()
     return text
 
+def remove_stopwords_and_stem(arg_text):
+    result = [stemmer.stem(item) for item in arg_text if item not in stopwords.words('english')]
+    return result
 
 class TextSimilar(gensim.utils.SaveLoad):
     def __init__(self):
@@ -46,7 +55,10 @@ class TextSimilar(gensim.utils.SaveLoad):
         self.lsi = None
 
     def _preprocess(self):
-        docs = [to_unicode(doc.strip()).split()[1:] for doc in file(self.fname)]
+        # docs = [to_unicode(doc.strip()).split()[1:] for doc in file(self.fname)]
+        # docs = [to_unicode(doc.strip()).split()[1:] for doc in file(self.fname)]
+        docs = [to_unicode(open(f, 'r').read().strip()).split() for f in glob.glob(self.fname)]
+        docs = [remove_stopwords_and_stem(item) for item in docs]
         pickle.dump(docs, open(self.conf['fname_docs'], 'wb'))
 
         dictionary = corpora.Dictionary(docs)
@@ -88,11 +100,13 @@ class TextSimilar(gensim.utils.SaveLoad):
             self.para = self.lsi[corpus_tfidf]
         elif method == 'lda_tfidf':
             logger.info("training LDA model")
-            self.lda = models.LdaMulticore(corpus_tfidf, id2word=self.dictionary, workers=8, **params)
+            # try 6 workers here instead of original 8
+            self.lda = models.LdaMulticore(corpus_tfidf, id2word=self.dictionary, workers=6, **params)
             self.similar_index = similarities.MatrixSimilarity(self.lda[corpus_tfidf])
             self.para = self.lda[corpus_tfidf]
         elif method == 'lda':
             logger.info("training LDA model")
+            # try 6 workers here instead of original 8
             self.lda = models.LdaMulticore(corpus, id2word=self.dictionary, workers=8, **params)
             self.similar_index = similarities.MatrixSimilarity(self.lda[corpus])
             self.para = self.lda[corpus]
@@ -171,20 +185,24 @@ def cluster(vectors, ts, k=30):
 
 
 def main(arg_is_train=True):
-    fname = data_dir + '/brand'
+    # todo make the data directory an input parameter
+    # file_name = data_dir + '/files.tar'
+    file_name = data_dir + '/*'
 
-    num_topics = 100
+    # todo make this an input parameter
+    topics_count = 100
+    # todo make this an input parameter
     method = 'lda'
 
-    ts = TextSimilar()
+    text_similar = TextSimilar()
     if arg_is_train:
-        ts.train(fname, method=method, num_topics=num_topics, is_pre=True, iterations=100)
-        ts.save(method)
+        text_similar.train(file_name, method=method, num_topics=topics_count, is_pre=True, iterations=100)
+        text_similar.save(method)
     else:
-        ts = TextSimilar().load(method)
+        text_similar = TextSimilar().load(method)
 
-    index = ts.get_vectors()
-    cluster(index, ts, k=num_topics)
+    index = text_similar.get_vectors()
+    cluster(index, text_similar, k=topics_count)
 
 
 if __name__ == '__main__':
