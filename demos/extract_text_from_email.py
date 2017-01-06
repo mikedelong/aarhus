@@ -46,7 +46,7 @@ for item in os.listdir(input_folder):
                     else:
                         result = payload.decode('utf-8', 'ignore').encode(target_encoding)
                     with open(output_subfolder + current_file, 'w') as text_file:
-                        text_file.write(result)
+                        text_file.write(result.decode('utf-8', 'ignore').encode('ascii', 'ignore'))
 
 
 
