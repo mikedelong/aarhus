@@ -2,21 +2,22 @@
 # coding:utf-8
 
 import cPickle as pickle
+import glob
 import logging
 import os
 import scipy
 import scipy.sparse
+import string
 import sys
+import time
 from collections import defaultdict
 
 import gensim.matutils
 import gensim.utils
 import numpy
 from gensim import corpora, models, similarities
-
-import glob
-from nltk.stem.snowball import SnowballStemmer
 from nltk.corpus import stopwords
+from nltk.stem.snowball import SnowballStemmer
 
 stemmer = SnowballStemmer("english")
 
@@ -34,11 +35,14 @@ logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=lo
 def to_unicode(text):
     if not isinstance(text, unicode):
         text = text.decode('utf-8', 'ignore').lower()
+        text = "".join([character for character in text.split() if character not in string.punctuation])
     return text
+
 
 def remove_stopwords_and_stem(arg_text):
     result = [stemmer.stem(item) for item in arg_text if item not in stopwords.words('english')]
     return result
+
 
 class TextSimilar(gensim.utils.SaveLoad):
     def __init__(self):
@@ -75,8 +79,8 @@ class TextSimilar(gensim.utils.SaveLoad):
         self.conf['fname_dict'] = '%s.dict' % fname
         self.conf['fname_corpus'] = '%s.mm' % fname
 
-    def train(self, fname, is_pre=True, method='lsi', **params):
-        self.fname = fname
+    def train(self, arg_fname, is_pre=True, method='lsi', **params):
+        self.fname = arg_fname
         self.method = method
         self._generate_conf()
         if is_pre:
@@ -107,7 +111,7 @@ class TextSimilar(gensim.utils.SaveLoad):
         elif method == 'lda':
             logger.info("training LDA model")
             # try 6 workers here instead of original 8
-            self.lda = models.LdaMulticore(corpus, id2word=self.dictionary, workers=8, **params)
+            self.lda = models.LdaMulticore(corpus, id2word=self.dictionary, workers=6, **params)
             self.similar_index = similarities.MatrixSimilarity(self.lda[corpus])
             self.para = self.lda[corpus]
         elif method == 'logentropy':
@@ -207,4 +211,10 @@ def main(arg_is_train=True):
 
 if __name__ == '__main__':
     is_train = True if len(sys.argv) > 1 else False
+    start_time = time.time()
     main(is_train)
+    finish_time = time.time()
+    elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
+    elapsed_minutes, elapsed_seconds = divmod(elapsed_remainder, 60)
+    logging.info(
+        "Elapsed time: {:0>2}:{:0>2}:{:05.2f}".format(int(elapsed_hours), int(elapsed_minutes), elapsed_seconds))
