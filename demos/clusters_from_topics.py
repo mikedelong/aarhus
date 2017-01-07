@@ -215,7 +215,7 @@ def cluster(vectors, ts, k=30, arg_method=None):
         x__y_dic[pred_y].add(''.join(ts.docs[i]))
 
     print ('len(x__y_dic): ', len(x__y_dic))
-    output_file_name = '../output/' + arg_method + '-cluster.txt'
+    output_file_name = '/../output/' + arg_method + '-cluster.txt'
     with open(data_dir + output_file_name, 'w') as fo:
         for y in x__y_dic:
             fo.write(str() + '\n')
