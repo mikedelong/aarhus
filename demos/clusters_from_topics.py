@@ -32,11 +32,36 @@ logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=lo
 
 
 # convert to unicode
-def to_unicode(text):
-    if not isinstance(text, unicode):
-        text = text.decode('utf-8', 'ignore').lower()
-        text = "".join([character for character in text.split() if character not in string.punctuation])
-    return text
+def to_unicode(arg_text):
+    result = arg_text.lower()
+    if not isinstance(result, unicode):
+        result = result.decode('utf-8', 'ignore')
+    result = ' '.join(
+        ["".join([character for character in unicode(word) if character not in string.punctuation]) for word in
+         result.split(' ') if not any([word.startswith('http:'), word.startswith('https:'),
+                                       word.startswith('mailto:'), word.endswith('.com'),
+                                       word.endswith('.org')])])
+    return result
+
+def to_unicode_unrolled(arg_text):
+    t = arg_text.lower()
+    result = []
+    if not isinstance(t, unicode):
+        t = t.decode('utf-8', 'ignore')
+    for word in t.split(' '):
+        b0 = word.startswith(u'http:')
+        b6 = word.startswith(u'<http:')
+        b1 = word.startswith(u'https:')
+        b2 = word.startswith(u'mailto:')
+        b3 = word.endswith(u'.com')
+        b4 = word.endswith(u'.org')
+        b5 = any([b0, b1, b2, b3, b4, b6])
+        if not b5:
+            word = ' '.join(
+                ["".join([character for character in unicode(word) if character not in string.punctuation])])
+        result.append(word)
+
+    return " ".join(result)
 
 
 def remove_stopwords_and_stem(arg_text):
@@ -61,15 +86,20 @@ class TextSimilar(gensim.utils.SaveLoad):
     def _preprocess(self):
         # docs = [to_unicode(doc.strip()).split()[1:] for doc in file(self.fname)]
         # docs = [to_unicode(doc.strip()).split()[1:] for doc in file(self.fname)]
-        docs = [to_unicode(open(f, 'r').read().strip()).split() for f in glob.glob(self.fname)]
+        docs = [to_unicode_unrolled(open(f, 'r').read().strip()).split() for f in glob.glob(self.fname)]
+        logger.debug('ingested files into big array with length %d' % len(docs))
         docs = [remove_stopwords_and_stem(item) for item in docs]
+        logger.debug('removed stopwords and stemmed')
         pickle.dump(docs, open(self.conf['fname_docs'], 'wb'))
+        logger.debug('pickle dump to %s done' % self.conf['fname_docs'])
 
         dictionary = corpora.Dictionary(docs)
         dictionary.save(self.conf['fname_dict'])
+        logger.debug('dictionary save to %s done' % self.conf['fname_dict'])
 
         corpus = [dictionary.doc2bow(doc) for doc in docs]
         corpora.MmCorpus.serialize(self.conf['fname_corpus'], corpus)
+        logger.debug('corpus serialize to %s done' % self.conf['fname_corpus'])
 
         return docs, dictionary, corpus
 
@@ -100,18 +130,21 @@ class TextSimilar(gensim.utils.SaveLoad):
         if method == 'lsi':
             logger.info("training LSI model")
             self.lsi = models.LsiModel(corpus_tfidf, id2word=self.dictionary, **params)
+            self.lsi.print_topics(-1)
             self.similar_index = similarities.MatrixSimilarity(self.lsi[corpus_tfidf])
             self.para = self.lsi[corpus_tfidf]
         elif method == 'lda_tfidf':
             logger.info("training LDA model")
             # try 6 workers here instead of original 8
             self.lda = models.LdaMulticore(corpus_tfidf, id2word=self.dictionary, workers=6, **params)
+            self.lda.print_topics(-1)
             self.similar_index = similarities.MatrixSimilarity(self.lda[corpus_tfidf])
             self.para = self.lda[corpus_tfidf]
         elif method == 'lda':
             logger.info("training LDA model")
             # try 6 workers here instead of original 8
             self.lda = models.LdaMulticore(corpus, id2word=self.dictionary, workers=6, **params)
+            self.lda.print_topics(-1)
             self.similar_index = similarities.MatrixSimilarity(self.lda[corpus])
             self.para = self.lda[corpus]
         elif method == 'logentropy':
@@ -173,7 +206,7 @@ class TextSimilar(gensim.utils.SaveLoad):
         return index
 
 
-def cluster(vectors, ts, k=30):
+def cluster(vectors, ts, k=30, arg_method=None):
     from sklearn.cluster import k_means
     x = numpy.array(vectors)
     cluster_center, result, inertia = k_means(x.astype(numpy.float), n_clusters=k, init="k-means++")
@@ -182,7 +215,8 @@ def cluster(vectors, ts, k=30):
         x__y_dic[pred_y].add(''.join(ts.docs[i]))
 
     print ('len(x__y_dic): ', len(x__y_dic))
-    with open(data_dir + '/cluster.txt', 'w') as fo:
+    output_file_name = '../output/' + arg_method + '-cluster.txt'
+    with open(data_dir + output_file_name, 'w') as fo:
         for y in x__y_dic:
             fo.write(str() + '\n')
             fo.write('{word}\n'.format(word='\n'.join(list(x__y_dic[y])[:100])))
@@ -196,17 +230,18 @@ def main(arg_is_train=True):
     # todo make this an input parameter
     topics_count = 100
     # todo make this an input parameter
-    method = 'lda'
+    # method = 'lda'
+    for method in ['lda',  'lda_tfidf', 'logentropy', 'lsi']:
 
-    text_similar = TextSimilar()
-    if arg_is_train:
-        text_similar.train(file_name, method=method, num_topics=topics_count, is_pre=True, iterations=100)
-        text_similar.save(method)
-    else:
-        text_similar = TextSimilar().load(method)
+        text_similar = TextSimilar()
+        if arg_is_train:
+            text_similar.train(file_name, method=method, num_topics=topics_count, is_pre=True, iterations=100)
+            text_similar.save(method)
+        else:
+            text_similar = TextSimilar().load(method)
 
-    index = text_similar.get_vectors()
-    cluster(index, text_similar, k=topics_count)
+        index = text_similar.get_vectors()
+        cluster(index, text_similar, k=topics_count, arg_method=method)
 
 
 if __name__ == '__main__':
