@@ -52,6 +52,12 @@ def get_stopwords():
     result = stopwords.words('english') + specific_stopwords + html_stopwords + common_words_to_ignore
     return result
 
+def get_specific_stopwords():
+    # here we try to de-noise by removing tokens we've seen in previous topics with this corpus that we suspect
+    # are email artifacts and do not represent any topic semantics
+    result =  specific_stopwords
+    return result
+
 def get_unanalyzed_senders():
     return unanalyzed_addresses
 
