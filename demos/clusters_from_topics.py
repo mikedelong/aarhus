@@ -21,7 +21,8 @@ from nltk.stem.snowball import SnowballStemmer
 
 stemmer = SnowballStemmer("english")
 
-data_dir = os.path.join(os.getcwd(), 'data')
+data_dir = os.path.join(os.getcwd(), 'data/')
+output_dir = os.path.join(os.getcwd(), 'output/')
 work_dir = os.path.join(os.getcwd(), 'model', os.path.basename(__file__).rstrip('.py'))
 if not os.path.exists(work_dir):
     os.mkdir(work_dir)
@@ -42,6 +43,7 @@ def to_unicode(arg_text):
                                        word.startswith('mailto:'), word.endswith('.com'),
                                        word.endswith('.org')])])
     return result
+
 
 def to_unicode_unrolled(arg_text):
     t = arg_text.lower()
@@ -72,20 +74,24 @@ def remove_stopwords_and_stem(arg_text):
 class TextSimilar(gensim.utils.SaveLoad):
     def __init__(self):
         self.conf = {}
-        self.lda = None
-        self.fname = None
-        self.method = None
-        self.docs = None
         self.dictionary = None
-        self.tfidf = None
-        self.para = None
+        self.docs = None
+        self.fname = None
+        self.lda = None
+        self.lda_similarity_index = None
+        self.lda_tfidf = None
+        self.lda_tfidf_similarity_index = None
         self.logent = None
-        self.similar_index = None
+        self.logent_similarity_index = None
         self.lsi = None
+        self.lsi_similarity_index = None
+        self.method = None
+        self.para = None
+        self.similar_index = None
+        self.tfidf = None
 
     def _preprocess(self):
-        # docs = [to_unicode(doc.strip()).split()[1:] for doc in file(self.fname)]
-        # docs = [to_unicode(doc.strip()).split()[1:] for doc in file(self.fname)]
+        # todo write a more pythonic version of this function and use it
         docs = [to_unicode_unrolled(open(f, 'r').read().strip()).split() for f in glob.glob(self.fname)]
         logger.debug('ingested files into big array with length %d' % len(docs))
         docs = [remove_stopwords_and_stem(item) for item in docs]
@@ -131,26 +137,26 @@ class TextSimilar(gensim.utils.SaveLoad):
             logger.info("training LSI model")
             self.lsi = models.LsiModel(corpus_tfidf, id2word=self.dictionary, **params)
             self.lsi.print_topics(-1)
-            self.similar_index = similarities.MatrixSimilarity(self.lsi[corpus_tfidf])
+            self.lsi_similarity_index = similarities.MatrixSimilarity(self.lsi[corpus_tfidf])
             self.para = self.lsi[corpus_tfidf]
         elif method == 'lda_tfidf':
             logger.info("training LDA model")
             # try 6 workers here instead of original 8
-            self.lda = models.LdaMulticore(corpus_tfidf, id2word=self.dictionary, workers=6, **params)
-            self.lda.print_topics(-1)
-            self.similar_index = similarities.MatrixSimilarity(self.lda[corpus_tfidf])
+            self.lda_tfidf = models.LdaMulticore(corpus_tfidf, id2word=self.dictionary, workers=6, **params)
+            self.lda_tfidf.print_topics(-1)
+            self.lda_tfidf_similarity_index = similarities.MatrixSimilarity(self.lda[corpus_tfidf])
             self.para = self.lda[corpus_tfidf]
         elif method == 'lda':
             logger.info("training LDA model")
             # try 6 workers here instead of original 8
             self.lda = models.LdaMulticore(corpus, id2word=self.dictionary, workers=6, **params)
             self.lda.print_topics(-1)
-            self.similar_index = similarities.MatrixSimilarity(self.lda[corpus])
+            self.lda_similarity_index = similarities.MatrixSimilarity(self.lda[corpus])
             self.para = self.lda[corpus]
         elif method == 'logentropy':
             logger.info("training a log-entropy model")
             self.logent = models.LogEntropyModel(corpus, id2word=self.dictionary)
-            self.similar_index = similarities.MatrixSimilarity(self.logent[corpus])
+            self.logent_similarity_index = similarities.MatrixSimilarity(self.logent[corpus])
             self.para = self.logent[corpus]
         else:
             msg = "unknown semantic method %s" % method
@@ -193,7 +199,7 @@ class TextSimilar(gensim.utils.SaveLoad):
         index = numpy.empty(shape=(len(corpus), num_features), dtype=numpy.float32)
         for docno, vector in enumerate(corpus):
             if docno % 1000 == 0:
-                print("PROGRESS: at document #%i/%i" % (docno, len(corpus)))
+                logger.info("PROGRESS: at document #%i/%i" % (docno, len(corpus)))
 
             if isinstance(vector, numpy.ndarray):
                 pass
@@ -214,9 +220,9 @@ def cluster(vectors, ts, k=30, arg_method=None):
     for i, pred_y in enumerate(result):
         x__y_dic[pred_y].add(''.join(ts.docs[i]))
 
-    print ('len(x__y_dic): ', len(x__y_dic))
-    output_file_name = '/../output/' + arg_method + '-cluster.txt'
-    with open(data_dir + output_file_name, 'w') as fo:
+    logger.info ('len(x__y_dic): %d' % len(x__y_dic))
+    output_file_name = arg_method + '-cluster.txt'
+    with open(output_dir + output_file_name, 'w') as fo:
         for y in x__y_dic:
             fo.write(str() + '\n')
             fo.write('{word}\n'.format(word='\n'.join(list(x__y_dic[y])[:100])))
@@ -230,9 +236,8 @@ def main(arg_is_train=True):
     # todo make this an input parameter
     topics_count = 100
     # todo make this an input parameter
-    # method = 'lda'
-    for method in ['lda',  'lda_tfidf', 'logentropy', 'lsi']:
-
+    methods = ['lda', 'lda_tfidf', 'lsi'] # leaving out logentropy due to memory issues
+    for method in methods:
         text_similar = TextSimilar()
         if arg_is_train:
             text_similar.train(file_name, method=method, num_topics=topics_count, is_pre=True, iterations=100)
