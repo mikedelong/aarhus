@@ -19,12 +19,14 @@ import time
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s :: %(message)s', level=logging.DEBUG)
 
+
 def strip_proppers(text):
     # first tokenize by sentence, then by word to ensure that punctuation is caught as it'sown token
     tokens = [word for sent in nltk.sent_tokenize(text) for word in nltk.word_tokenize(sent)
               if word.islower()]
     return "".join(
         [" " + i if not i.startswith("'") and i not in string.punctuation else i for i in tokens]).strip()
+
 
 def tokenize_and_stem(text):
     # first tokenize by sentence, then by word to ensure that punctuation is caught as it'sown token
@@ -39,6 +41,7 @@ def tokenize_and_stem(text):
     result = [stem for stem in stems if stem not in touchup_list]
     return result
 
+
 def clean_address(arg_value):
     result = str(arg_value)
     for token in clean_address_tokens:
@@ -46,21 +49,15 @@ def clean_address(arg_value):
             result = result.replace(token, ' ')
     return result.lower().strip()
 
+
 start_time = time.time()
 
 stemmer = SnowballStemmer("english")
 
-
-
 touchup_list = custom_stopwords.get_specific_stopwords()
-
-
 
 # https://groups.google.com/forum/#!topic/microsoft.public.outlookexpress.general/oig7-xNFISg
 clean_address_tokens = ['=?us-ascii?Q?', '=0D=0A_=28', '=?utf-8?Q?', '=29?=', '=0D=0A']
-
-
-
 
 with open('./sklearn_kmeans_clustering.json') as data_file:
     data = json.load(data_file)
@@ -102,7 +99,7 @@ logging.debug('we have %d terms/feature names' % len(terms))
 terms_out_file = 'sklearn_kmeans_terms.csv'
 with open(terms_out_file, 'w') as terms_out_fp:
     for item in terms:
-      terms_out_fp.write("%s\n" % item)
+        terms_out_fp.write("%s\n" % item)
 logging.debug('wrote terms to %s' % terms_out_file)
 
 clusters = model.labels_.tolist()
@@ -122,7 +119,7 @@ for item in zip(file_names, clusters):
     result[short_file_name] = item[1]
     pass
 
-cluster_out_file ='sklearn_kmeans_clusters.json'
+cluster_out_file = 'sklearn_kmeans_clusters.json'
 with open(cluster_out_file, 'w') as fp:
     json.dump(result, fp)
 logging.debug('wrote clusters to %s' % cluster_out_file)
@@ -140,10 +137,8 @@ if False:
 
     pos = mds.fit_transform(distances)  # shape (n_components, n_samples)
 
-
     linkage_matrix = ward(distances)  # define the linkage_matrix using ward clustering pre-computed distances
     logging.debug('got linkage matrix')
-
 
     import matplotlib.pyplot as plt
 
@@ -169,4 +164,3 @@ elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
 elapsed_minutes, elapsed_seconds = divmod(elapsed_remainder, 60)
 logging.info(
     "Elapsed time: {:0>2}:{:0>2}:{:05.2f}".format(int(elapsed_hours), int(elapsed_minutes), elapsed_seconds))
-
