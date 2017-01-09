@@ -15,10 +15,9 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 from aarhus.aarhus import custom_stopwords
 
+import time
+
 logging.basicConfig(format='%(asctime)s : %(levelname)s :: %(message)s', level=logging.DEBUG)
-
-stemmer = SnowballStemmer("english")
-
 
 def strip_proppers(text):
     # first tokenize by sentence, then by word to ensure that punctuation is caught as it'sown token
@@ -26,8 +25,6 @@ def strip_proppers(text):
               if word.islower()]
     return "".join(
         [" " + i if not i.startswith("'") and i not in string.punctuation else i for i in tokens]).strip()
-
-touchup_list = custom_stopwords.get_specific_stopwords()
 
 def tokenize_and_stem(text):
     # first tokenize by sentence, then by word to ensure that punctuation is caught as it'sown token
@@ -42,17 +39,27 @@ def tokenize_and_stem(text):
     result = [stem for stem in stems if stem not in touchup_list]
     return result
 
-
-# https://groups.google.com/forum/#!topic/microsoft.public.outlookexpress.general/oig7-xNFISg
-clean_address_tokens = ['=?us-ascii?Q?', '=0D=0A_=28', '=?utf-8?Q?', '=29?=', '=0D=0A']
-
-
 def clean_address(arg_value):
     result = str(arg_value)
     for token in clean_address_tokens:
         if token in result:
             result = result.replace(token, ' ')
     return result.lower().strip()
+
+start_time = time.time()
+
+stemmer = SnowballStemmer("english")
+
+
+
+touchup_list = custom_stopwords.get_specific_stopwords()
+
+
+
+# https://groups.google.com/forum/#!topic/microsoft.public.outlookexpress.general/oig7-xNFISg
+clean_address_tokens = ['=?us-ascii?Q?', '=0D=0A_=28', '=?utf-8?Q?', '=29?=', '=0D=0A']
+
+
 
 
 with open('./sklearn_kmeans_clustering.json') as data_file:
@@ -156,3 +163,10 @@ if False:
     plt.savefig('ward_clusters.png', dpi=200)  # save figure as ward_clusters
 
 pass
+
+finish_time = time.time()
+elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
+elapsed_minutes, elapsed_seconds = divmod(elapsed_remainder, 60)
+logging.info(
+    "Elapsed time: {:0>2}:{:0>2}:{:05.2f}".format(int(elapsed_hours), int(elapsed_minutes), elapsed_seconds))
+
