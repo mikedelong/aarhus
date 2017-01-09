@@ -14,8 +14,6 @@ import elasticsearch.helpers
 import nltk
 import pyzmail
 from gensim import utils
-from gensim.corpora import Dictionary
-from gensim.models import LsiModel
 from nltk.stem.snowball import SnowballStemmer
 
 import custom_stopwords
@@ -43,6 +41,7 @@ class Importer(object):
         # first tokenize by sentence, then by word to ensure that punctuation is caught as it'sown token
         tokens = [word for sent in nltk.sent_tokenize(arg_text) for word in nltk.word_tokenize(sent)
                   if word.islower()]
+        # todo get the startswiths and endswiths right here
         return "".join(
             [" " + i if not i.startswith("'") and not i.startswith("/") and not i.endswith(
                 "=") and i not in string.punctuation else i for i in tokens]).strip()
@@ -60,8 +59,7 @@ class Importer(object):
         return stems
 
     def process_folder(self, arg_folder, arg_bulk_upload, arg_document_type, arg_buffer_limit, arg_server,
-                       arg_index_name, arg_lda_model, arg_stopwords, arg_lda_dictionary, arg_lsi_model,
-                       arg_lsi_dictionary, arg_kmeans_cluster_dictionary, arg_unanalyzed_senders):
+                       arg_index_name, arg_kmeans_cluster_dictionary):
         document_count = 0
         document_buffer = []
         indexed_count = 0
@@ -76,12 +74,7 @@ class Importer(object):
                                                               arg_process_text_part=self.process_text_part,
                                                               arg_process_html_part=self.process_html_part,
                                                               arg_process_both_empty=self.process_both_empty,
-                                                              arg_lda_model=arg_lda_model, arg_stopwords=arg_stopwords,
-                                                              arg_lda_dictionary=arg_lda_dictionary,
-                                                              arg_lsi_model=arg_lsi_model,
-                                                              arg_lsi_dictionary=arg_lsi_dictionary,
-                                                              arg_kmeans_cluster_dictionary=arg_kmeans_cluster_dictionary,
-                                                              arg_unanalyzed_senders=arg_unanalyzed_senders)
+                                                              arg_kmeans_cluster_dictionary=arg_kmeans_cluster_dictionary)
                     # logging.debug(current_json)
                     document_count += 1
                     try:
@@ -139,8 +132,7 @@ class Importer(object):
         return max_key
 
     def get_json(self, current_file, arg_process_text_part, arg_process_html_part, arg_process_both_empty,
-                 arg_lda_model, arg_stopwords, arg_lda_dictionary, arg_lsi_model, arg_lsi_dictionary,
-                 arg_kmeans_cluster_dictionary, arg_unanalyzed_senders):
+                 arg_kmeans_cluster_dictionary):
         result = {'original_file': current_file}
         with open(current_file, 'rb') as fp:
             message = pyzmail.message_from_file(fp)
@@ -195,18 +187,8 @@ class Importer(object):
                     body = payload.decode('utf-8', 'ignore').encode(self.target_encoding)
                 result['body'] = body
 
-                body_ascii = body.decode('utf-8', 'ignore').encode('ascii', 'ignore')
-                body_no_proppers = self.strip_proppers(body_ascii)
-                tokenized_text = self.tokenize_and_stem(body_no_proppers)
-                document = [word for word in tokenized_text if word not in arg_stopwords]
-
-                if len(set(clean_senders) & arg_unanalyzed_senders) != 0:
-                    lda_topic = self.get_topic_for_document(document, arg_lda_model, arg_lda_dictionary)
-                    result['lda_topic'] = lda_topic
-                    lsi_topic = self.get_topic_for_document(document, arg_lsi_model, arg_lsi_dictionary)
-                    result['lsi_topic'] = lsi_topic
-                    short_file_name = os.path.basename(current_file)
-                    result['kmeans_cluster'] = arg_kmeans_cluster_dictionary[short_file_name]
+                short_file_name = os.path.basename(current_file)
+                result['kmeans_cluster'] = arg_kmeans_cluster_dictionary[short_file_name]
 
             elif message.html_part is not None and arg_process_html_part:
                 payload = message.html_part.part.get_payload()
@@ -243,10 +225,6 @@ def run():
         elasticsearch_index_name = data['elasticsearch_index_name']
         elasticsearch_document_type = data['elasticsearch_document_type']
         elasticsearch_batch_size = data['elasticsearch_batch_size']
-        lda_model_file_name = data['lda_model_file_name']
-        lda_dictionary_file_name = data['lda_dictionary_file_name']
-        lsi_model_file_name = data['lsi_model_file_name']
-        lsi_dictionary_file_name = data['lsi_dictionary_file_name']
         kmeans_cluster_file_name = data['kmeans_cluster_file_name']
 
     # get the connection to elasticsearch
@@ -256,15 +234,7 @@ def run():
         elasticsearch_server.indices.delete(elasticsearch_index_name)
     elasticsearch_server.indices.create(elasticsearch_index_name)
 
-    lda_model = utils.SaveLoad.load(lda_model_file_name)
-    lda_dictionary = Dictionary.load(lda_dictionary_file_name)
-    lsi_model = LsiModel.load(lsi_model_file_name)
-    lsi_dictionary = Dictionary.load(lsi_dictionary_file_name)
     kmeans_cluster_dictionary = json.load(open(kmeans_cluster_file_name, 'r'))
-
-    stopwords = custom_stopwords.get_stopwords()
-    unanalyzed_senders = custom_stopwords.get_unanalyzed_senders()
-    unanalyzed_senders = set(unanalyzed_senders)
 
     mapping = {
         elasticsearch_document_type: {
@@ -323,8 +293,7 @@ def run():
     instance = Importer(arg_document_count_limit=document_count_limit, arg_process_text_part=process_text_part,
                         arg_process_html_part=process_html_part, arg_process_both_empty=process_both_empty)
     instance.process_folder(input_folder, True, elasticsearch_document_type, elasticsearch_batch_size,
-                            elasticsearch_server, elasticsearch_index_name, lda_model, stopwords, lda_dictionary,
-                            lsi_model, lsi_dictionary, kmeans_cluster_dictionary, unanalyzed_senders)
+                            elasticsearch_server, elasticsearch_index_name, kmeans_cluster_dictionary)
 
     finish_time = time.time()
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
