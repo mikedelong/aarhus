@@ -13,7 +13,7 @@ from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.manifold import TSNE
 
-from aarhus.aarhus import custom_stopwords
+# from aarhus.aarhus import custom_stopwords
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s :: %(message)s', level=logging.DEBUG)
 
@@ -34,12 +34,7 @@ def tokenize_and_stem(text):
     for token in tokens:
         if re.search('[a-zA-Z]', token):
             filtered_tokens.append(token)
-    # todo remove touchup list ?
-    if True:
-        result = [stemmer.stem(t) for t in filtered_tokens]
-    else:
-        stems = [stemmer.stem(t) for t in filtered_tokens]
-        result = [stem for stem in stems if stem not in touchup_list]
+    result = [stemmer.stem(t) for t in filtered_tokens]
     return result
 
 
@@ -55,7 +50,7 @@ start_time = time.time()
 
 stemmer = SnowballStemmer("english")
 
-touchup_list = custom_stopwords.get_specific_stopwords()
+# touchup_list = custom_stopwords.get_specific_stopwords()
 
 # https://groups.google.com/forum/#!topic/microsoft.public.outlookexpress.general/oig7-xNFISg
 clean_address_tokens = ['=?us-ascii?Q?', '=0D=0A_=28', '=?utf-8?Q?', '=29?=', '=0D=0A']
@@ -70,10 +65,12 @@ with open('./sklearn_kmeans_clustering.json') as data_file:
     random_state = data['random_state']
     max_df = data['max_df']
     min_df = data['min_df']
+    max_features = data['max_features']
+    n_components = data['n_components']
 
 target_encoding = 'utf-8'
 
-stopwords = custom_stopwords.get_stopwords()
+# stopwords = custom_stopwords.get_stopwords()
 
 file_names = [os.path.join(root, current) for root, subdirectories, files in os.walk(input_folder) for current in files]
 logging.debug('we have %d files', len(file_names))
@@ -84,13 +81,13 @@ logging.debug('we are using %d files', len(file_names))
 
 documents = [open(file_name, 'r').read() for file_name in file_names]
 
-tfidf_vectorizer = TfidfVectorizer(max_df=max_df, max_features=200000, min_df=min_df, stop_words='english',
+tfidf_vectorizer = TfidfVectorizer(max_df=max_df, max_features=max_features, min_df=min_df, stop_words='english',
                                    use_idf=True, tokenizer=tokenize_and_stem, ngram_range=(1, 2), decode_error='ignore',
                                    strip_accents='ascii')
 
 tfidf_matrix = tfidf_vectorizer.fit_transform(documents)
 
-X_reduced = TruncatedSVD(n_components=50, random_state=random_state).fit_transform(tfidf_matrix)
+X_reduced = TruncatedSVD(n_components=n_components, random_state=random_state).fit_transform(tfidf_matrix)
 
 X_embedded = TSNE(n_components=2, perplexity=40, verbose=2).fit_transform(X_reduced)
 
@@ -102,8 +99,8 @@ pyplot.subplots_adjust(left=0.0, bottom=0.0, right=1.0, top=0.9,
 pyplot.scatter(X_embedded[:, 0], X_embedded[:, 1], marker="x")
 
 pyplot.show()
-model = KMeans(n_clusters=cluster_count, random_state=random_state)
 
+model = KMeans(n_clusters=cluster_count, random_state=random_state)
 model.fit(tfidf_matrix)
 #
 # # todo write terms to a file for later viewing
