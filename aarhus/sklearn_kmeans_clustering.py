@@ -36,9 +36,12 @@ def tokenize_and_stem(text):
     for token in tokens:
         if re.search('[a-zA-Z]', token):
             filtered_tokens.append(token)
-    stems = [stemmer.stem(t) for t in filtered_tokens]
     # todo remove touchup list ?
-    result = [stem for stem in stems if stem not in touchup_list]
+    if True:
+        result = [stemmer.stem(t) for t in filtered_tokens]
+    else:
+        stems = [stemmer.stem(t) for t in filtered_tokens]
+        result = [stem for stem in stems if stem not in touchup_list]
     return result
 
 
@@ -69,6 +72,7 @@ with open('./sklearn_kmeans_clustering.json') as data_file:
     random_state = data['random_state']
     max_df = data['max_df']
     min_df = data['min_df']
+    max_features = data['max_features']
 
 target_encoding = 'utf-8'
 
@@ -83,7 +87,7 @@ logging.debug('we are using %d files', len(file_names))
 
 documents = [open(file_name, 'r').read() for file_name in file_names]
 
-tfidf_vectorizer = TfidfVectorizer(max_df=max_df, max_features=200000, min_df=min_df, stop_words='english',
+tfidf_vectorizer = TfidfVectorizer(max_df=max_df, max_features=max_features, min_df=min_df, stop_words='english',
                                    use_idf=True, tokenizer=tokenize_and_stem, ngram_range=(1, 2), decode_error='ignore',
                                    strip_accents='ascii')
 
