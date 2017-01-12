@@ -55,6 +55,7 @@ rectangles = axis.bar(x_location, t4, bar_width, color='g')  # , yerr=menStd)
 # add some text for labels, title and axes ticks
 axis.set_ylabel('Hits (fraction)')
 axis.set_xlabel('Cluster number')
+pyplot.title(search_term)
 axis.set_xticks(x_location + bar_width)
 axis.set_xticklabels(tuple(t5))
 
