@@ -155,6 +155,7 @@ class Importer(object):
             subject = message.get('subject')
             result['subject'] = '' if subject is None else subject.decode('iso-8859-1').encode(self.target_encoding)
 
+
             raw_date = message.get('date')
             if raw_date is not None:
                 try:
@@ -199,6 +200,10 @@ class Importer(object):
                 logging.warn('both text_part and html_part are None: %s', current_file)
             else:
                 logging.warn('not processing %s', current_file)
+
+            if 'body' in result.keys():
+                if len(result['body']) == 0:
+                    result['empty_body'] = True
 
             md5 = hashlib.md5()
             with open(current_file, 'rb') as fp:
