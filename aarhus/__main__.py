@@ -13,10 +13,7 @@ import elasticsearch
 import elasticsearch.helpers
 import nltk
 import pyzmail
-from gensim import utils
 from nltk.stem.snowball import SnowballStemmer
-
-import custom_stopwords
 
 # http://mypy.pythonblogs.com/12_mypy/archive/1253_workaround_for_python_bug_ascii_codec_cant_encode_character_uxa0_in_position_111_ordinal_not_in_range128.html
 reload(sys)
@@ -118,19 +115,6 @@ class Importer(object):
                 result = result.replace(token, ' ')
         return result.lower().strip()
 
-    def get_topic_for_document(self, arg_document, arg_model, arg_dictionary):
-        # todo factor this into a function
-        basket_of_words = arg_dictionary.doc2bow(arg_document)
-        topics = arg_model[basket_of_words]
-        # todo find a pythonic way to do this
-        max_value = 0.0
-        max_key = 0
-        for item in topics:
-            if item[1] > max_value:
-                max_value = item[1]
-                max_key = item[0]
-        return max_key
-
     def get_json(self, current_file, arg_process_text_part, arg_process_html_part, arg_process_both_empty,
                  arg_kmeans_cluster_dictionary):
         result = {'original_file': current_file}
@@ -154,7 +138,6 @@ class Importer(object):
 
             subject = message.get('subject')
             result['subject'] = '' if subject is None else subject.decode('iso-8859-1').encode(self.target_encoding)
-
 
             raw_date = message.get('date')
             if raw_date is not None:
