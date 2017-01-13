@@ -205,6 +205,13 @@ class Importer(object):
                 if len(result['body']) == 0:
                     result['empty_body'] = True
 
+            if 'Message-Id' in message.keys():
+                result['messaage-id'] = message['Message-Id']
+            if 'In-Reply-To' in message.keys():
+                result['in-reply-to'] = message['In-Reply-To']
+            if 'References' in message.keys():
+                result['references'] = message['References'].split(' ')
+
             md5 = hashlib.md5()
             with open(current_file, 'rb') as fp:
                 md5.update(fp.read())
