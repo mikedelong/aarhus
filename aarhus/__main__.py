@@ -115,6 +115,19 @@ class Importer(object):
                 result = result.replace(token, ' ')
         return result.lower().strip()
 
+    def get_references(self, current_file):
+        result = {}
+        with open(current_file, 'rb') as fp:
+            message = pyzmail.message_from_file(fp)
+            if 'Message-Id' in message.keys():
+                result['message-id'] = message['Message-Id']
+            elif 'Message-ID' in message.keys():
+                result['message-id'] = message['Message-ID']
+            else:
+                logging.warn('no message id in file %s', current_file)
+            if 'References' in message.keys():
+                references = message['References'].split(' ')
+
     def get_json(self, current_file, arg_process_text_part, arg_process_html_part, arg_process_both_empty,
                  arg_kmeans_cluster_dictionary):
         result = {'original_file': current_file}
@@ -189,7 +202,7 @@ class Importer(object):
                     result['empty_body'] = True
 
             if 'Message-Id' in message.keys():
-                result['messaage-id'] = message['Message-Id']
+                result['message-id'] = message['Message-Id']
             if 'In-Reply-To' in message.keys():
                 result['in-reply-to'] = message['In-Reply-To']
             if 'References' in message.keys():
