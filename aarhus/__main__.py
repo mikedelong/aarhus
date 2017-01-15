@@ -127,6 +127,8 @@ class Importer(object):
                 logging.warn('no message id in file %s', current_file)
             if 'References' in message.keys():
                 references = message['References'].split(' ')
+                result['references'] = references
+        return result
 
     def get_json(self, current_file, arg_process_text_part, arg_process_html_part, arg_process_both_empty,
                  arg_kmeans_cluster_dictionary):
