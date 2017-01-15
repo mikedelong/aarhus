@@ -5,7 +5,6 @@ import sys
 import time
 
 import pyzmail
-from nltk.stem.snowball import SnowballStemmer
 
 # http://mypy.pythonblogs.com/12_mypy/archive/1253_workaround_for_python_bug_ascii_codec_cant_encode_character_uxa0_in_position_111_ordinal_not_in_range128.html
 reload(sys)
@@ -21,7 +20,6 @@ class Importer(object):
         self.process_text_part = arg_process_text_part
         self.process_html_part = arg_process_html_part
         self.process_both_empty = arg_process_both_empty
-        self.stemmer = SnowballStemmer("english")
 
     def process_folder(self, arg_folder):
         document_count = 0
@@ -65,6 +63,8 @@ class Importer(object):
                 result['message-id'] = message['Message-Id']
             elif 'Message-ID' in message.keys():
                 result['message-id'] = message['Message-ID']
+            elif 'Message-id' in message.keys():
+                result['message-id'] = message['Message-id']
             else:
                 logging.warn('no message id in file %s', current_file)
             if 'References' in message.keys():
