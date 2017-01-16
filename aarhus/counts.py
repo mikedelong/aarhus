@@ -161,7 +161,7 @@ def run():
 
     X_embedded = TSNE(n_components=2, perplexity=40, verbose=2).fit_transform(X_reduced)
 
-    # fig = pyplot.figure(figsize=(10, 10))
+    fig = pyplot.figure(figsize=(12, 12))
     ax = pyplot.axes(frameon=False)
     pyplot.setp(ax, xticks=(), yticks=())
     pyplot.subplots_adjust(left=0.0, bottom=0.0, right=1.0, top=0.9,wspace=0.0, hspace=0.0)
