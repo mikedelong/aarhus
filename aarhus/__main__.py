@@ -34,7 +34,8 @@ class Importer(object):
         pass
 
     # http://brandonrose.org/clustering (with some modifications)
-    def strip_proppers(self, arg_text):
+    @staticmethod
+    def strip_proppers(arg_text):
         # first tokenize by sentence, then by word to ensure that punctuation is caught as it'sown token
         tokens = [word for sent in nltk.sent_tokenize(arg_text) for word in nltk.word_tokenize(sent)
                   if word.islower()]
@@ -56,7 +57,7 @@ class Importer(object):
         return stems
 
     def process_folder(self, arg_folder, arg_bulk_upload, arg_document_type, arg_buffer_limit, arg_server,
-                       arg_index_name, arg_kmeans_cluster_dictionary):
+                       arg_index_name, arg_kmeans_dictionary):
         document_count = 0
         document_buffer = []
         indexed_count = 0
@@ -71,7 +72,7 @@ class Importer(object):
                                                               arg_process_text_part=self.process_text_part,
                                                               arg_process_html_part=self.process_html_part,
                                                               arg_process_both_empty=self.process_both_empty,
-                                                              arg_kmeans_cluster_dictionary=arg_kmeans_cluster_dictionary)
+                                                              arg_kmeans_cluster_dictionary=arg_kmeans_dictionary)
                     # logging.debug(current_json)
                     document_count += 1
                     try:
@@ -84,7 +85,7 @@ class Importer(object):
                                     index_result = elasticsearch.helpers.bulk(arg_server, document_buffer,
                                                                               index=arg_index_name,
                                                                               request_timeout=1000)
-                                    # logging.debug(index_result)
+                                    logging.debug(index_result)
                                     indexed_count += len(document_buffer)
                                     document_buffer = []
                                 except elasticsearch.exceptions.ConnectionTimeout as connectionTimeout:
@@ -115,7 +116,8 @@ class Importer(object):
                 result = result.replace(token, ' ')
         return result.lower().strip()
 
-    def get_references(self, current_file):
+    @staticmethod
+    def get_references(current_file):
         result = {}
         with open(current_file, 'rb') as fp:
             message = pyzmail.message_from_file(fp)
@@ -160,7 +162,8 @@ class Importer(object):
                     result['date'] = dateutil.parser.parse(raw_date)
                 except ValueError as valueError:
                     # todo find a way to deal with these special cases?
-                    # we occasionally get a string the parser won't parse e.g. Wed, 17 Dec 2008 12:35:42 -0700 (GMT-07:00)
+                    # we occasionally get a string the parser won't parse e.g.
+                    # Wed, 17 Dec 2008 12:35:42 -0700 (GMT-07:00)
                     # and we need to drop off the trailing time zone and try to parse again
                     logging.warn('%s %s %s', raw_date, valueError, current_file)
                     pieces = str(raw_date).split('(')
@@ -210,11 +213,11 @@ class Importer(object):
             if 'References' in message.keys():
                 result['references'] = message['References'].split(' ')
 
-            md5 = hashlib.md5()
-            with open(current_file, 'rb') as fp:
-                md5.update(fp.read())
+        md5 = hashlib.md5()
+        with open(current_file, 'rb') as fp:
+            md5.update(fp.read())
 
-            return result, md5.hexdigest()
+        return result, md5.hexdigest()
 
 
 def run():
