@@ -13,11 +13,24 @@ from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.manifold import TSNE
 
+import textblob
+
 # http://mypy.pythonblogs.com/12_mypy/archive/1253_workaround_for_python_bug_ascii_codec_cant_encode_character_uxa0_in_position_111_ordinal_not_in_range128.html
 reload(sys)
 sys.setdefaultencoding("utf8")
 
 stemmer = SnowballStemmer("english")
+
+
+def get_noun_phrases_and_stem(arg_text):
+    blob = textblob.TextBlob(arg_text)
+    tokens = [word for phrase in blob.noun_phrases for word in nltk.word_tokenize(phrase)]
+    filtered_tokens = []
+    for token in tokens:
+        if re.search('[a-zA-Z]', token):
+            filtered_tokens.append(token)
+    result = [stemmer.stem(t) for t in filtered_tokens]
+    return result
 
 
 def tokenize_and_stem(text):
@@ -42,9 +55,7 @@ class Importer(object):
         self.process_html_part = arg_process_html_part
         self.process_both_empty = arg_process_both_empty
 
-    def get_if_is_reply(self, arg_file):
-        references = self.get_references(arg_file)
-
+    # todo make whether we return replies or not-replies a setting with a parameter that implements it
     def process_folder(self, arg_folder):
         not_reply_result = []
         document_count = 0
@@ -59,15 +70,18 @@ class Importer(object):
                     if document_count % 1000 == 0 and document_count > 0:
                         logging.debug("%d %s", document_count, current_full_file_name)
                     references = self.get_references(current_full_file_name)
-                    if references.has_key('references'):
+                    if 'references' in references.keys():
+                        # if references.has_key('references'):
                         references_count += 1
                     else:
                         no_references_count += 1
                     document_count += 1
-                    if references.has_key('message-id'):
+                    if 'message-id' in references.keys():
+                        # if references.has_key('message-id'):
                         message_id_count += 1
                     # if a file isn't a reply let's put it in the not-reply result
-                    if not references.has_key('in-reply-to'):
+                    if 'in-reply-to' in references.keys():
+                        # if references.has_key('in-reply-to'):
                         not_reply_result.append(current)
 
         logging.info('documents : %d message-id: %d references: %d no references: %d' % (
@@ -86,7 +100,8 @@ class Importer(object):
                 result = result.replace(token, ' ')
         return result.lower().strip()
 
-    def get_references(self, current_file):
+    @staticmethod
+    def get_references(current_file):
         result = {}
         with open(current_file, 'rb') as fp:
             message = pyzmail.message_from_file(fp)
@@ -150,22 +165,32 @@ def run():
     file_names = convert(text_input_folder, document_count_limit, not_reply)
 
     documents = [open(file_name, 'r').read() for file_name in file_names]
+    logging.debug('finished reading documents into the big list')
 
+    # todo make the tokenizer a setting
     tfidf_vectorizer = TfidfVectorizer(max_df=max_df, max_features=max_features, min_df=min_df, stop_words='english',
-                                       use_idf=True, tokenizer=tokenize_and_stem, ngram_range=(1, 2),
+                                       use_idf=True,
+                                       # tokenizer=tokenize_and_stem,
+                                       tokenizer=get_noun_phrases_and_stem,
+                                       ngram_range=(1, 2),
                                        decode_error='ignore', strip_accents='ascii')
+    logging.debug('built the tfidf vectorizer')
 
     tfidf_matrix = tfidf_vectorizer.fit_transform(documents)
+    logging.debug('built the tfidf matrix')
 
-    X_reduced = TruncatedSVD(n_components=n_components, random_state=random_state).fit_transform(tfidf_matrix)
+    reduced = TruncatedSVD(n_components=n_components, random_state=random_state).fit_transform(tfidf_matrix)
+    logging.debug('built the SVD with %d components', n_components)
 
-    X_embedded = TSNE(n_components=2, perplexity=40, verbose=2).fit_transform(X_reduced)
+    embedded = TSNE(n_components=2, perplexity=40, verbose=2).fit_transform(reduced)
+    logging.debug('built the tSNE model')
 
     fig = pyplot.figure(figsize=(12, 12))
     ax = pyplot.axes(frameon=False)
     pyplot.setp(ax, xticks=(), yticks=())
-    pyplot.subplots_adjust(left=0.0, bottom=0.0, right=1.0, top=0.9,wspace=0.0, hspace=0.0)
-    pyplot.scatter(X_embedded[:, 0], X_embedded[:, 1], marker="x")
+    pyplot.subplots_adjust(left=0.0, bottom=0.0, right=1.0, top=0.9, wspace=0.0, hspace=0.0)
+    # http://matplotlib.org/api/markers_api.html
+    pyplot.scatter(embedded[:, 0], embedded[:, 1], marker=".") # was x
 
     finish_time = time.time()
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
@@ -173,7 +198,6 @@ def run():
     logging.info("Time: {:0>2}:{:0>2}:{:05.2f}".format(int(elapsed_hours), int(elapsed_minutes), elapsed_seconds))
 
     pyplot.show()
-
 
 
 if __name__ == '__main__':
