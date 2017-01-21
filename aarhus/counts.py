@@ -152,6 +152,8 @@ def run():
         max_df = data['max_df']
         min_df = data['min_df']
         max_features = data['max_features']
+        if max_features == -1:
+            max_features = None
         n_components = data['n_components']
 
     instance = Importer(arg_document_count_limit=document_count_limit, arg_process_text_part=process_text_part,
