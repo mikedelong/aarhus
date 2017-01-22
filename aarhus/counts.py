@@ -56,8 +56,8 @@ class Importer(object):
         self.process_both_empty = arg_process_both_empty
 
     # todo make whether we return replies or not-replies a setting with a parameter that implements it
-    def process_folder(self, arg_folder):
-        not_reply_result = []
+    def process_folder(self, arg_folder, arg_reference, arg_in_or_out):
+        result = []
         document_count = 0
         no_references_count = 0
         references_count = 0
@@ -79,14 +79,15 @@ class Importer(object):
                     if 'message-id' in references.keys():
                         # if references.has_key('message-id'):
                         message_id_count += 1
-                    # if a file isn't a reply let's put it in the not-reply result
-                    if 'in-reply-to' in references.keys():
-                        # if references.has_key('in-reply-to'):
-                        not_reply_result.append(current)
+
+                    if arg_reference in references.keys() and arg_in_or_out:
+                        result.append(current)
+                    elif arg_reference in references.keys() and not arg_in_or_out:
+                        result.append(current)
 
         logging.info('documents : %d message-id: %d references: %d no references: %d' % (
             document_count, message_id_count, references_count, no_references_count))
-        return not_reply_result
+        return result
 
     target_encoding = 'utf-8'
 
@@ -155,11 +156,14 @@ def run():
         if max_features == -1:
             max_features = None
         n_components = data['n_components']
+        reference_of_interest = data['reference']
+        in_or_out = data['reference_in']
+        in_or_out = bool(in_or_out)
 
     instance = Importer(arg_document_count_limit=document_count_limit, arg_process_text_part=process_text_part,
                         arg_process_html_part=process_html_part, arg_process_both_empty=process_both_empty)
 
-    not_reply = instance.process_folder(input_folder)
+    not_reply = instance.process_folder(input_folder, reference_of_interest, in_or_out)
     logging.info(not_reply)
     logging.info(len(not_reply))
 
