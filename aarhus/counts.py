@@ -187,7 +187,7 @@ def run():
     reduced = TruncatedSVD(n_components=n_components, random_state=random_state).fit_transform(tfidf_matrix)
     logging.debug('built the SVD with %d components', n_components)
 
-    embedded = TSNE(n_components=2, perplexity=40, verbose=2).fit_transform(reduced)
+    embedded = TSNE(n_components=2, perplexity=40, verbose=2, random_state=random_state).fit_transform(reduced)
     logging.debug('built the tSNE model')
 
     fig = pyplot.figure(figsize=(12, 12))
