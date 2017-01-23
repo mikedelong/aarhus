@@ -55,7 +55,6 @@ class Importer(object):
         self.process_html_part = arg_process_html_part
         self.process_both_empty = arg_process_both_empty
 
-    # todo make whether we return replies or not-replies a setting with a parameter that implements it
     def process_folder(self, arg_folder, arg_reference, arg_in_or_out):
         result = []
         document_count = 0
@@ -82,7 +81,7 @@ class Importer(object):
 
                     if arg_reference in references.keys() and arg_in_or_out:
                         result.append(current)
-                    elif arg_reference in references.keys() and not arg_in_or_out:
+                    elif arg_reference not in references.keys() and not arg_in_or_out:
                         result.append(current)
 
         logging.info('documents : %d message-id: %d references: %d no references: %d' % (
