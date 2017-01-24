@@ -8,12 +8,11 @@ import time
 import matplotlib.pyplot as pyplot
 import nltk
 import pyzmail
+import textblob
 from nltk.stem.snowball import SnowballStemmer
 from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.manifold import TSNE
-
-import textblob
 
 # http://mypy.pythonblogs.com/12_mypy/archive/1253_workaround_for_python_bug_ascii_codec_cant_encode_character_uxa0_in_position_111_ordinal_not_in_range128.html
 reload(sys)
@@ -156,18 +155,20 @@ def run():
             max_features = None
         n_components = data['n_components']
         reference_of_interest = data['reference']
+        # our internal keys are always lowercase, so we want to be sure
+        # to use a lowercase reference for comparisons
+        reference_of_interest = reference_of_interest.lower()
         in_or_out = data['reference_in']
         in_or_out = bool(in_or_out)
 
     instance = Importer(arg_document_count_limit=document_count_limit, arg_process_text_part=process_text_part,
                         arg_process_html_part=process_html_part, arg_process_both_empty=process_both_empty)
 
-    not_reply = instance.process_folder(input_folder, reference_of_interest, in_or_out)
-    logging.info(not_reply)
-    logging.info(len(not_reply))
+    document_names_of_interest = instance.process_folder(input_folder, reference_of_interest, in_or_out)
+    logging.info('found %d documents of interest: %s' % (len(document_names_of_interest), document_names_of_interest))
 
     # let's take this sample and build a cluster and display it
-    file_names = convert(text_input_folder, document_count_limit, not_reply)
+    file_names = convert(text_input_folder, document_count_limit, document_names_of_interest)
 
     documents = [open(file_name, 'r').read() for file_name in file_names]
     logging.debug('finished reading documents into the big list')
@@ -195,7 +196,7 @@ def run():
     pyplot.setp(ax, xticks=(), yticks=())
     pyplot.subplots_adjust(left=0.0, bottom=0.0, right=1.0, top=0.9, wspace=0.0, hspace=0.0)
     # http://matplotlib.org/api/markers_api.html
-    pyplot.scatter(embedded[:, 0], embedded[:, 1], marker=".") # was x
+    pyplot.scatter(embedded[:, 0], embedded[:, 1], marker=".")  # was x
 
     finish_time = time.time()
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
