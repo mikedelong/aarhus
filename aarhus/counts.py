@@ -1,5 +1,6 @@
 import json
 import logging
+import math
 import os
 import re
 import sys
@@ -12,6 +13,9 @@ import textblob
 from nltk.stem.snowball import SnowballStemmer
 from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.manifold import Isomap
+from sklearn.manifold import LocallyLinearEmbedding
+from sklearn.manifold import MDS
 from sklearn.manifold import TSNE
 
 # http://mypy.pythonblogs.com/12_mypy/archive/1253_workaround_for_python_bug_ascii_codec_cant_encode_character_uxa0_in_position_111_ordinal_not_in_range128.html
@@ -160,6 +164,8 @@ def run():
         reference_of_interest = reference_of_interest.lower()
         in_or_out = data['reference_in']
         in_or_out = bool(in_or_out)
+        manifold = data['manifold']
+        manifold = str(manifold).lower()
 
     instance = Importer(arg_document_count_limit=document_count_limit, arg_process_text_part=process_text_part,
                         arg_process_html_part=process_html_part, arg_process_both_empty=process_both_empty)
@@ -188,8 +194,53 @@ def run():
     reduced = TruncatedSVD(n_components=n_components, random_state=random_state).fit_transform(tfidf_matrix)
     logging.debug('built the SVD with %d components', n_components)
 
-    embedded = TSNE(n_components=2, perplexity=40, verbose=2, random_state=random_state).fit_transform(reduced)
-    logging.debug('built the tSNE model')
+    if manifold == 'isomap':
+        n_neighbors = int(math.sqrt(len(document_names_of_interest)))
+        embedded = Isomap(n_neighbors=n_neighbors, n_components=2, eigen_solver='auto', tol=0, path_method='auto',
+                          neighbors_algorithm='auto').fit_transform(reduced)
+        logging.debug('built the Isomap model')
+    elif manifold == 'tsne' or manifold == 't-sne':
+        embedded = TSNE(n_components=2, perplexity=40, verbose=2, random_state=random_state).fit_transform(reduced)
+        logging.debug('built the tSNE model')
+    elif manifold == 'locallylinear' or manifold == 'locally-linear' or manifold == 'lle':
+        n_neighbors = int(math.sqrt(len(document_names_of_interest)))
+        embedded = LocallyLinearEmbedding(n_neighbors=n_neighbors, n_components=2,
+                                          reg=0.001, eigen_solver='auto', tol=1e-06,
+                                          max_iter=200, method='standard', hessian_tol=0.0001, modified_tol=1e-12,
+                                          neighbors_algorithm='auto', random_state=random_state).fit_transform(reduced)
+        logging.debug('built the Locally Linear Embedding model')
+    elif manifold == 'mlle':
+        n_components = 2
+        n_neighbors = max(int(math.sqrt(len(document_names_of_interest))), n_components)
+        embedded = LocallyLinearEmbedding(n_neighbors=n_neighbors, n_components=n_components,
+                                          reg=0.001, eigen_solver='auto', tol=1e-06,
+                                          max_iter=200, method='modified', hessian_tol=0.0001, modified_tol=1e-12,
+                                          neighbors_algorithm='auto', random_state=random_state).fit_transform(reduced)
+        logging.debug('built the Modified Locally Linear Embedding model')
+    elif manifold == 'hessian-lle' or manifold == 'hessian':
+        n_components = 2
+        n_neighbors = max(int(math.sqrt(len(document_names_of_interest))), n_components)
+        embedded = LocallyLinearEmbedding(n_neighbors=n_neighbors, n_components=n_components,
+                                          reg=0.001, eigen_solver='auto', tol=1e-06,
+                                          max_iter=200, method='hessian', hessian_tol=0.0001, modified_tol=1e-12,
+                                          neighbors_algorithm='auto', random_state=random_state).fit_transform(reduced)
+        logging.debug('built the Hessian model')
+    elif manifold == 'locally-tangent' or manifold == 'ltsa':
+        n_components = 2
+        n_neighbors = max(int(math.sqrt(len(document_names_of_interest))), n_components)
+        embedded = LocallyLinearEmbedding(n_neighbors=n_neighbors, n_components=n_components,
+                                          reg=0.001, eigen_solver='auto', tol=1e-06,
+                                          max_iter=200, method='ltsa', hessian_tol=0.0001, modified_tol=1e-12,
+                                          neighbors_algorithm='auto', random_state=random_state).fit_transform(reduced)
+        logging.debug('built the Locally Tangent Space Alignment model')
+    elif manifold == 'multi-dimensional-scaling' or manifold == 'mds':
+        embedded = MDS(n_components=2, metric=True, n_init=4, max_iter=300, verbose=0, eps=0.001, n_jobs=6,
+                       random_state=random_state, dissimilarity='euclidean').fit_transform(reduced)
+        logging.debug('built the Multi-dimensional Scaling model')
+    elif manifold == 'non-metric-multi-dimensional-scaling' or manifold == 'nmmds':
+        embedded = MDS(n_components=2, metric=False, n_init=4, max_iter=300, verbose=0, eps=0.001, n_jobs=6,
+                       random_state=random_state, dissimilarity='euclidean').fit_transform(reduced)
+        logging.debug('built the Multi-dimensional Scaling model')
 
     fig = pyplot.figure(figsize=(12, 12))
     ax = pyplot.axes(frameon=False)
