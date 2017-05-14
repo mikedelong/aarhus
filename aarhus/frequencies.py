@@ -13,8 +13,8 @@ sys.setdefaultencoding("utf8")
 logging.basicConfig(format='%(asctime)s : %(levelname)s :: %(message)s', level=logging.DEBUG)
 stop_words = set(nltk.corpus.stopwords.words('english'))
 stop_words.update(['new', 'one', 'may', 'made', 'however', 'would', 'toward', '--', 'two', 'even', 'november',
-                   'december', 'march', 'much'])
-# todo add punctuation cleanup
+                   'december', 'march', 'much', 'many'])
+
 input_file = None
 input_folder = None
 with open('frequencies-settings.json') as data_file:
@@ -25,7 +25,7 @@ with open('frequencies-settings.json') as data_file:
     elif 'input_folder' in data.keys():
         input_folder = data['input_folder']
 
-most_count = 30
+most_count = 35
 limit = sys.maxint
 # limit = 1
 
