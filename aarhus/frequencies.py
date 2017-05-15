@@ -13,7 +13,9 @@ sys.setdefaultencoding("utf8")
 logging.basicConfig(format='%(asctime)s : %(levelname)s :: %(message)s', level=logging.DEBUG)
 stop_words = set(nltk.corpus.stopwords.words('english'))
 stop_words.update(['new', 'one', 'may', 'made', 'however', 'would', 'toward', '--', 'two', 'even', 'november',
-                   'december', 'march', 'much', 'many'])
+                   'december', 'march', 'much', 'many', 'september', 'october', 'among', 'august', 'make', 'although',
+                   'view', 'june', 'might', 'went', 'could', 'must', 'way', 'began', 'us', 'also', 'might', 'become',
+                   'seems'])
 
 input_file = None
 input_folder = None
@@ -25,15 +27,14 @@ with open('frequencies-settings.json') as data_file:
     elif 'input_folder' in data.keys():
         input_folder = data['input_folder']
 
-most_count = 35
+most_count = 75
 limit = sys.maxint
 # limit = 1
 
 words = []
 if input_file is not None:
     text = textract.process(input_file)
-    current_words = [word for word in text.lower().split()]
-    current_words = [word.rstrip('?:!.,;') for word in current_words]
+    current_words = [word.rstrip('?:!.,;') for word in text.lower().split()]
     current_words = [word for word in current_words if len(word) > 1 and word not in stop_words]
     words.extend(current_words)
 
@@ -57,6 +58,6 @@ logging.debug('%d total words/tokens' % len(words))
 counts = collections.Counter(words)
 most = counts.most_common(most_count)
 logging.debug(counts)
-for item in most:
-    logging.debug('%s : %d' % item)
+for index, item in enumerate(most):
+    logging.debug('%s: %s :: %d' % (index + 1, item[0], item[1]))
 logging.debug('%d unique words/tokens' % len(counts))
