@@ -15,7 +15,9 @@ stop_words = set(nltk.corpus.stopwords.words('english'))
 stop_words.update(['new', 'one', 'may', 'made', 'however', 'would', 'toward', '--', 'two', 'even', 'november',
                    'december', 'march', 'much', 'many', 'september', 'october', 'among', 'august', 'make', 'although',
                    'view', 'june', 'might', 'went', 'could', 'must', 'way', 'began', 'us', 'also', 'might', 'become',
-                   'seems'])
+                   'seems', 'known', 'months', 'end', 'upon', 'need', 'good', 'seemed', 'begin', 'less', 'more',
+                   'thus', 'case', 'mean', 'means', 'main', 'february', 'work', 'play', 'form', 'day', 'first',
+                   'second', 'hand', 'come', 'become', 'came', 'became', 'views'])
 
 input_file = None
 input_folder = None
@@ -27,7 +29,7 @@ with open('frequencies-settings.json') as data_file:
     elif 'input_folder' in data.keys():
         input_folder = data['input_folder']
 
-most_count = 75
+most_count = 100
 limit = sys.maxint
 # limit = 1
 
@@ -45,7 +47,7 @@ if input_folder is not None:
     pathname = input_folder + '*.pdf'
     for this_file in glob.glob(pathname=pathname):
         if file_count < limit:
-            logging.debug(this_file)
+            logging.debug('%d : %s'  % (file_count, this_file))
             text = textract.process(this_file)
             current_words = [word for word in text.lower().split()]
             current_words = [word.rstrip('?:!.,;') for word in current_words]
