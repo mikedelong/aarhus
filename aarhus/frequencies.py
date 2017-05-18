@@ -17,7 +17,8 @@ stop_words.update(['new', 'one', 'may', 'made', 'however', 'would', 'toward', '-
                    'view', 'june', 'might', 'went', 'could', 'must', 'way', 'began', 'us', 'also', 'might', 'become',
                    'seems', 'known', 'months', 'end', 'upon', 'need', 'good', 'seemed', 'begin', 'less', 'more',
                    'thus', 'case', 'mean', 'means', 'main', 'february', 'work', 'play', 'form', 'day', 'first',
-                   'second', 'hand', 'come', 'become', 'came', 'became', 'views', 'open', 'close', 'closed'])
+                   'second', 'hand', 'come', 'become', 'came', 'became', 'views', 'open', 'close', 'closed',
+                   'three', 'third', 'second'])
 
 input_file = None
 input_folder = None
