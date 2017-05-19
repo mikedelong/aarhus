@@ -6,6 +6,8 @@ import json
 import glob
 import nltk.corpus
 
+from nltk.stem.snowball import SnowballStemmer
+
 # http://mypy.pythonblogs.com/12_mypy/archive/1253_workaround_for_python_bug_ascii_codec_cant_encode_character_uxa0_in_position_111_ordinal_not_in_range128.html
 reload(sys)
 sys.setdefaultencoding("utf8")
@@ -18,7 +20,9 @@ stop_words.update(['new', 'one', 'may', 'made', 'however', 'would', 'toward', '-
                    'seems', 'known', 'months', 'end', 'upon', 'need', 'good', 'seemed', 'begin', 'less', 'more',
                    'thus', 'case', 'mean', 'means', 'main', 'february', 'work', 'play', 'form', 'day', 'first',
                    'second', 'hand', 'come', 'become', 'came', 'became', 'views', 'open', 'close', 'closed',
-                   'three', 'third', 'second'])
+                   'three', 'third', 'second', 'whether', 'take', 'used', 'move', 'almost', 'january'])
+
+stemmer = SnowballStemmer('english')
 
 input_file = None
 input_folder = None
@@ -30,7 +34,7 @@ with open('frequencies-settings.json') as data_file:
     elif 'input_folder' in data.keys():
         input_folder = data['input_folder']
 
-most_count = 100
+most_count = 120
 limit = sys.maxint
 # limit = 1
 
@@ -39,6 +43,9 @@ if input_file is not None:
     text = textract.process(input_file)
     current_words = [word.rstrip('?:!.,;') for word in text.lower().split()]
     current_words = [word for word in current_words if len(word) > 1 and word not in stop_words]
+    logging.debug('before stemming we have %d words' % len(current_words))
+    current_words = [stemmer.stem(word) for word in current_words]
+    logging.debug('after stemming we have %d words' % len(current_words))
     words.extend(current_words)
 
 file_count = 0
@@ -53,6 +60,9 @@ if input_folder is not None:
             current_words = [word for word in text.lower().split()]
             current_words = [word.rstrip('?:!.,;') for word in current_words]
             current_words = [word for word in current_words if len(word) > 1 and word not in stop_words]
+            logging.debug('before stemming we have %d words' % len(current_words))
+            current_words = [stemmer.stem(word) for word in current_words]
+            logging.debug('after stemming we have %d words' % len(current_words))
             words.extend(current_words)
             file_count += 1
 
