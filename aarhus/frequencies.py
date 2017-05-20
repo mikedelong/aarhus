@@ -20,7 +20,8 @@ stop_words.update(['new', 'one', 'may', 'made', 'however', 'would', 'toward', '-
                    'seems', 'known', 'months', 'end', 'upon', 'need', 'good', 'seemed', 'begin', 'less', 'more',
                    'thus', 'case', 'mean', 'means', 'main', 'february', 'work', 'play', 'form', 'day', 'first',
                    'second', 'hand', 'come', 'become', 'came', 'became', 'views', 'open', 'close', 'closed',
-                   'three', 'third', 'second', 'whether', 'take', 'used', 'move', 'almost', 'january'])
+                   'three', 'third', 'second', 'whether', 'take', 'used', 'move', 'almost', 'january',
+                   'follow', 'go', 'work', 'u.'])
 
 stemmer = SnowballStemmer('english')
 
