@@ -64,6 +64,9 @@ if input_folder is not None:
             logging.debug('before stemming we have %d words' % len(current_words))
             current_words = [stemmer.stem(word) for word in current_words]
             logging.debug('after stemming we have %d words' % len(current_words))
+            current_counts = collections.Counter(current_words)
+            current_most = current_counts.most_common(most_count)
+            logging.debug(current_most)
             words.extend(current_words)
             file_count += 1
 
