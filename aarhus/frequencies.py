@@ -50,6 +50,7 @@ if input_file is not None:
     words.extend(current_words)
 
 file_count = 0
+per_file_most = list()
 if input_folder is not None:
     if not input_folder.endswith('/'):
         input_folder += '/'
@@ -66,6 +67,7 @@ if input_folder is not None:
             logging.debug('after stemming we have %d words' % len(collections.Counter(current_words)))
             current_counts = collections.Counter(current_words)
             current_most = current_counts.most_common(most_count)
+            per_file_most.append(current_most)
             logging.debug(current_most)
             words.extend(current_words)
             file_count += 1
