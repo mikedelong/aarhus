@@ -35,7 +35,7 @@ with open('frequencies-settings.json') as data_file:
     elif 'input_folder' in data.keys():
         input_folder = data['input_folder']
 
-most_count = 120
+most_count = 20
 limit = sys.maxint
 # limit = 1
 
@@ -49,6 +49,7 @@ if input_file is not None:
     logging.debug('after stemming we have %d words' % len(current_words))
     words.extend(current_words)
 
+current_most = None
 file_count = 0
 per_file_most = list()
 if input_folder is not None:
@@ -80,3 +81,8 @@ logging.debug(counts)
 for index, item in enumerate(most):
     logging.debug('%s: %s :: %d' % (index + 1, item[0], item[1]))
 logging.debug('%d unique words/tokens' % len(counts))
+most_words = set([each[0] for each in most])
+logging.debug(most_words)
+for item in per_file_most:
+    current = set([each[0] for each in item])
+    logging.debug(current.difference(most_words))
