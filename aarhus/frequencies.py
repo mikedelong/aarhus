@@ -5,6 +5,7 @@ import textract
 import json
 import glob
 import nltk.corpus
+import pickle
 
 from nltk.stem.snowball import SnowballStemmer
 
@@ -35,7 +36,7 @@ with open('frequencies-settings.json') as data_file:
     elif 'input_folder' in data.keys():
         input_folder = data['input_folder']
 
-most_count = 20
+# most_count = 20
 limit = sys.maxint
 # limit = 1
 
@@ -67,7 +68,8 @@ if input_folder is not None:
             current_words = [stemmer.stem(word) for word in current_words]
             logging.debug('after stemming we have %d words' % len(collections.Counter(current_words)))
             current_counts = collections.Counter(current_words)
-            current_most = current_counts.most_common(most_count)
+            # current_most = current_counts.most_common(most_count)
+            current_most = current_counts.most_common()
             per_file_most.append(current_most)
             logging.debug(current_most)
             words.extend(current_words)
@@ -76,13 +78,26 @@ if input_folder is not None:
 logging.debug('%d total words/tokens' % len(words))
 
 counts = collections.Counter(words)
-most = counts.most_common(most_count)
+# most = counts.most_common(most_count)
+most = counts.most_common()
 logging.debug(counts)
-for index, item in enumerate(most):
-    logging.debug('%s: %s :: %d' % (index + 1, item[0], item[1]))
-logging.debug('%d unique words/tokens' % len(counts))
-most_words = set([each[0] for each in most])
-logging.debug(most_words)
-for item in per_file_most:
-    current = set([each[0] for each in item])
-    logging.debug(current.difference(most_words))
+if False:
+    for index, item in enumerate(most):
+        logging.debug('%s: %s :: %d' % (index + 1, item[0], item[1]))
+    logging.debug('%d unique words/tokens' % len(counts))
+    most_words = set([each[0] for each in most])
+    logging.debug(most_words)
+    for item in per_file_most:
+        current = set([each[0] for each in item])
+        logging.debug(current.difference(most))
+
+result = {
+    'most_common_from_documents' : per_file_most,
+    'most_common_from_corpus' : most
+}
+
+output_file = './most_common.pickle'
+with open(output_file, 'wb') as output_fp:
+    pickle.dump(result, output_fp)
+
+logging.debug('wrote most common words data to output file %s.' % output_file)
