@@ -1,12 +1,12 @@
-import logging
 import collections
-import sys
-import textract
-import json
 import glob
-import nltk.corpus
+import json
+import logging
 import pickle
+import sys
 
+import nltk.corpus
+import textract
 from nltk.stem.snowball import SnowballStemmer
 
 # http://mypy.pythonblogs.com/12_mypy/archive/1253_workaround_for_python_bug_ascii_codec_cant_encode_character_uxa0_in_position_111_ordinal_not_in_range128.html
@@ -59,7 +59,7 @@ if input_folder is not None:
     pathname = input_folder + '*.pdf'
     for this_file in glob.glob(pathname=pathname):
         if file_count < limit:
-            logging.debug('%d : %s'  % (file_count, this_file))
+            logging.debug('%d : %s' % (file_count, this_file))
             text = textract.process(this_file)
             current_words = [word for word in text.lower().split()]
             current_words = [word.rstrip('?:!.,;') for word in current_words]
@@ -92,8 +92,8 @@ if False:
         logging.debug(current.difference(most))
 
 result = {
-    'most_common_from_documents' : per_file_most,
-    'most_common_from_corpus' : most
+    'most_common_from_documents': per_file_most,
+    'most_common_from_corpus': most
 }
 
 output_file = './most_common.pickle'
