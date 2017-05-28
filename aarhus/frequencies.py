@@ -4,6 +4,7 @@ import json
 import logging
 import pickle
 import sys
+import os.path
 
 import nltk.corpus
 import textract
@@ -40,8 +41,11 @@ with open('frequencies-settings.json') as data_file:
 limit = sys.maxint
 # limit = 1
 
+file_names = list()
 words = []
 if input_file is not None:
+    short_name = os.path.basename(input_file)
+    file_names.append(short_name)
     text = textract.process(input_file)
     current_words = [word.rstrip('?:!.,;') for word in text.lower().split()]
     current_words = [word for word in current_words if len(word) > 1 and word not in stop_words]
@@ -58,7 +62,10 @@ if input_folder is not None:
         input_folder += '/'
     pathname = input_folder + '*.pdf'
     for this_file in glob.glob(pathname=pathname):
+
         if file_count < limit:
+            short_name = os.path.basename(this_file)
+            file_names.append(short_name)
             logging.debug('%d : %s' % (file_count, this_file))
             text = textract.process(this_file)
             current_words = [word for word in text.lower().split()]
@@ -93,7 +100,8 @@ if False:
 
 result = {
     'most_common_from_documents': per_file_most,
-    'most_common_from_corpus': most
+    'most_common_from_corpus': most,
+    'file_names' : file_names
 }
 
 output_file = './most_common.pickle'
