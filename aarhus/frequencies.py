@@ -2,9 +2,9 @@ import collections
 import glob
 import json
 import logging
+import os.path
 import pickle
 import sys
-import os.path
 
 import nltk.corpus
 import textract
@@ -101,7 +101,7 @@ if False:
 result = {
     'most_common_from_documents': per_file_most,
     'most_common_from_corpus': most,
-    'file_names' : file_names
+    'file_names': file_names
 }
 
 output_file = './most_common.pickle'
