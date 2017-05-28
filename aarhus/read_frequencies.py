@@ -9,3 +9,6 @@ with open(input_file, 'rb') as input_fp:
     data = pickle.load(input_fp)
 
 logging.debug('read preprocessed data from  %s.' % input_file)
+
+for key in data.keys():
+    logging.debug('input data has key %s' % key)
