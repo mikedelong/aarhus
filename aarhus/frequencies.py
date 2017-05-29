@@ -88,15 +88,6 @@ counts = collections.Counter(words)
 # most = counts.most_common(most_count)
 most = counts.most_common()
 logging.debug(counts)
-if False:
-    for index, item in enumerate(most):
-        logging.debug('%s: %s :: %d' % (index + 1, item[0], item[1]))
-    logging.debug('%d unique words/tokens' % len(counts))
-    most_words = set([each[0] for each in most])
-    logging.debug(most_words)
-    for item in per_file_most:
-        current = set([each[0] for each in item])
-        logging.debug(current.difference(most))
 
 result = {
     'most_common_from_documents': per_file_most,
