@@ -75,7 +75,6 @@ if input_folder is not None:
             current_words = [stemmer.stem(word) for word in current_words]
             logging.debug('after stemming we have %d words' % len(collections.Counter(current_words)))
             current_counts = collections.Counter(current_words)
-            # current_most = current_counts.most_common(most_count)
             current_most = current_counts.most_common()
             per_file_most.append(current_most)
             logging.debug(current_most)
@@ -85,7 +84,6 @@ if input_folder is not None:
 logging.debug('%d total words/tokens' % len(words))
 
 counts = collections.Counter(words)
-# most = counts.most_common(most_count)
 most = counts.most_common()
 logging.debug(counts)
 
