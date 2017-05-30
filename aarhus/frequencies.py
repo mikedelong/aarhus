@@ -76,7 +76,7 @@ if input_folder is not None:
             logging.debug('after stemming we have %d words' % len(collections.Counter(current_words)))
             current_counts = collections.Counter(current_words)
             current_most = current_counts.most_common()
-            per_file_most.append(current_most)
+            per_file_most.append(current_counts)
             logging.debug(current_most)
             words.extend(current_words)
             file_count += 1
@@ -88,8 +88,8 @@ most = counts.most_common()
 logging.debug(counts)
 
 result = {
-    'most_common_from_documents': per_file_most,
-    'most_common_from_corpus': most,
+    'counts_from_documents': per_file_most,
+    'counts_from_corpus': counts,
     'file_names': file_names
 }
 
