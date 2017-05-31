@@ -1,6 +1,6 @@
 import logging
 import pickle
-
+import collections
 logging.basicConfig(format='%(asctime)s : %(levelname)s :: %(message)s', level=logging.DEBUG)
 
 logging.debug('started.')
@@ -17,20 +17,23 @@ file_names = list()
 if 'file_names' in data.keys():
     file_names = data['file_names']
 
-most = list()
-if 'most_common_from_corpus' in data.keys():
-    most = data['most_common_from_corpus']
+most = collections.Counter()
+if 'counts_from_corpus' in data.keys():
+    most = data['counts_from_corpus']
 
 per_file_most = list()
-if 'most_common_from_documents' in data.keys():
-    per_file_most = data['most_common_from_documents']
+if 'counts_from_documents' in data.keys():
+    per_file_most = data['counts_from_documents']
+
+t0 = most.most_common(10)
 
 if True:
-    for index, item in enumerate(most):
+    for index, item in enumerate(t0):
         logging.debug('%s: %s :: %d' % (index + 1, item[0], item[1]))
     # logging.debug('%d unique words/tokens' % len(counts))
-    most_words = set([each[0] for each in most])
+    most_words = set([each[0] for each in t0])
     logging.debug(most_words)
     for item in per_file_most:
-        current = set([each[0] for each in item])
-        logging.debug(current.difference(most))
+        t1 = item.most_common(10)
+        current = set([each[0] for each in t1])
+        logging.debug(current.difference(t0))
