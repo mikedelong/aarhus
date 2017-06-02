@@ -17,23 +17,22 @@ file_names = list()
 if 'file_names' in data.keys():
     file_names = data['file_names']
 
-most = collections.Counter()
+counts_from_corpus = collections.Counter()
 if 'counts_from_corpus' in data.keys():
-    most = data['counts_from_corpus']
+    counts_from_corpus = data['counts_from_corpus']
 
-per_file_most = list()
+counts_from_documents = list()
 if 'counts_from_documents' in data.keys():
-    per_file_most = data['counts_from_documents']
+    counts_from_documents = data['counts_from_documents']
 
-t0 = most.most_common(10)
+t0 = counts_from_corpus.most_common(20)
 
 if True:
     for index, item in enumerate(t0):
         logging.debug('%s: %s :: %d' % (index + 1, item[0], item[1]))
-    # logging.debug('%d unique words/tokens' % len(counts))
     most_words = set([each[0] for each in t0])
     logging.debug(most_words)
-    for item in per_file_most:
+    for item in counts_from_documents:
         t1 = item.most_common(10)
         current = set([each[0] for each in t1])
         logging.debug(current.difference(t0))
