@@ -1,14 +1,10 @@
-import collections
 import glob
 import json
 import logging
 import os.path
-import pickle
 import sys
 
-import nltk.corpus
 import textract
-from nltk.stem.snowball import SnowballStemmer
 
 # http://mypy.pythonblogs.com/12_mypy/archive/1253_workaround_for_python_bug_ascii_codec_cant_encode_character_uxa0_in_position_111_ordinal_not_in_range128.html
 reload(sys)
@@ -22,6 +18,7 @@ input_file = None
 input_folder = None
 name_token_file = None
 not_name_token_file = None
+limit = 0
 with open('frequencies-settings.json') as data_file:
     data = json.load(data_file)
     logging.debug(data)
@@ -33,10 +30,10 @@ with open('frequencies-settings.json') as data_file:
         name_token_file = data['name_token_file']
     if 'not_name_token_file' in data.keys():
         not_name_token_file = data['not_name_token_file']
-
-# most_count = 20
-limit = sys.maxint
-limit = 1
+    if 'document_limit' in data.keys():
+        limit = int(data['document_limit'])
+        if limit == -1:
+            limit = sys.maxint
 
 file_names = list()
 words = []
@@ -58,8 +55,6 @@ current_most = None
 file_count = 0
 per_file_most = list()
 count = 0
-# name_tokens = {'Liu', 'Teng', 'Harry', 'Mao', 'Chou', 'Peng', 'Robert', 'Le', 'Lao', 'Kim',
-#                      'Mitsuhiro', 'Lin', 'Chen', 'Harian', 'Ben', 'Lo', 'Yang', 'Sun', 'Li', 'Che'}
 unlikely_name_tokens = {'North', 'World', 'Korean', 'Defense', 'Yugoslavia', 'Vietnam'}
 if input_folder is not None:
     if not input_folder.endswith('/'):
@@ -76,8 +71,8 @@ if input_folder is not None:
             current_words = [word.rstrip('?:!.,;') for word in current_words]
             for index, word in enumerate(current_words):
                 if index > 0:
-                    w0 = current_words[index-1]
-                    if len(word) > 0 and len(w0) > 0 and  word[0].isupper()  and w0[0].isupper():
+                    w0 = current_words[index - 1]
+                    if len(word) > 0 and len(w0) > 0 and word[0].isupper() and w0[0].isupper():
                         score = 0
                         # todo move these to data
                         if w0 in name_tokens:
