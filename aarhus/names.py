@@ -5,6 +5,7 @@ import os.path
 import sys
 
 import textract
+import re
 
 # http://mypy.pythonblogs.com/12_mypy/archive/1253_workaround_for_python_bug_ascii_codec_cant_encode_character_uxa0_in_position_111_ordinal_not_in_range128.html
 reload(sys)
@@ -13,6 +14,10 @@ sys.setdefaultencoding("utf8")
 logging.basicConfig(format='%(asctime)s : %(levelname)s :: %(message)s', level=logging.DEBUG)
 
 logging.debug('started.')
+
+_digits = re.compile('\d')
+def contains_digits(arg):
+    return bool(_digits.search(arg))
 
 input_file = None
 input_folder = None
@@ -82,18 +87,24 @@ if input_folder is not None:
                             score += 1
                         if w0.isupper() and word.isupper():
                             score -= 1
-                        if w0.isupper() and len(w0) > 1:
-                            score -= 1
-                        if word.isupper() and len(word) > 1:
+                        if (w0.isupper() and len(w0)) or (word.isupper() and len(word)) > 1:
                             score -= 1
                         if w0.isdigit() or word.isdigit():
                             score -= 1
-                        if w0 in bad_tokens:
+                        if w0 in bad_tokens or word in bad_tokens:
                             score -= 1
-                        if word in bad_tokens:
+                        if w0.split('-')[0] in bad_tokens or word.split('-')[0] in bad_tokens:
+                            score -= 1
+                        if '\'' in word:
+                            score -= 1
+                        if w0.endswith('\"') or word.endswith('\"'):
+                            score -= 1
+                        if any([ord(c) > 128 for c in w0 + word]):
+                            score -= 1
+                        if contains_digits(w0+word):
                             score -= 1
                         if score >= 0:
-                            logging.debug('%d %d [%s] %s %d [%s]' % (score, index, w0, w0.isupper(), len(w0), word))
+                            logging.debug('%d %d [%s] %s %d [%s]' % (score, index, w0, '\'' in word, len(w0), word))
                         if score > 0:
                             count += 1
             file_count += 1
