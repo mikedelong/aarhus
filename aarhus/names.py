@@ -65,6 +65,7 @@ current_most = None
 file_count = 0
 per_file_most = list()
 count = 0
+zeros_count = 0
 if input_folder is not None:
     if not input_folder.endswith('/'):
         input_folder += '/'
@@ -107,7 +108,9 @@ if input_folder is not None:
                             logging.debug('%d %d [%s] %s %d [%s]' % (score, index, w0, '\'' in word, len(w0), word))
                         if score > 0:
                             count += 1
+                        elif score == 0:
+                            zeros_count += 1
             file_count += 1
 
-logging.debug('total found: %d' % count)
+logging.debug('total found: %d; zeros found: %d' % (count, zeros_count))
 logging.debug('done.')
