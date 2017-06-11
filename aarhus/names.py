@@ -104,6 +104,10 @@ if input_folder is not None:
                             score -= 1
                         if contains_digits(w0+word):
                             score -= 1
+                        if w0.endswith(')') or word.endswith(')'):
+                            count -= 1
+                        if w0.endswith('*') or word.endswith('*'):
+                            count -= 1
                         if score >= 0:
                             logging.debug('%d %d [%s] %s %d [%s]' % (score, index, w0, '\'' in word, len(w0), word))
                         if score > 0:
