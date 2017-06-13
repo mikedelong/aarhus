@@ -6,6 +6,7 @@ import sys
 
 import textract
 import re
+import string
 
 # http://mypy.pythonblogs.com/12_mypy/archive/1253_workaround_for_python_bug_ascii_codec_cant_encode_character_uxa0_in_position_111_ordinal_not_in_range128.html
 reload(sys)
@@ -19,6 +20,9 @@ _digits = re.compile('\d')
 def contains_digits(arg):
     return bool(_digits.search(arg))
 
+punctuation = set(string.punctuation)
+bogeys = set(string.punctuation)
+bogeys.remove('-')
 input_file = None
 input_folder = None
 name_token_file = None
@@ -108,8 +112,14 @@ if input_folder is not None:
                             count -= 1
                         if w0.endswith('*') or word.endswith('*'):
                             count -= 1
+                        if any([each.isdigit() for each in w0+word]):
+                            score -= 1
+                        if any([each in bogeys for each in w0+word]):
+                            score -= 1
                         if score >= 0:
-                            logging.debug('%d %d [%s] %s %d [%s]' % (score, index, w0, '\'' in word, len(w0), word))
+                            logging.debug('%d %d [%s] %s %d [%s]' % (score, index, w0,
+                                                                     any([each in bogeys for each in w0+word]),
+                                                                     len(w0), word))
                         if score > 0:
                             count += 1
                         elif score == 0:
