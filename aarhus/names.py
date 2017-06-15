@@ -111,17 +111,17 @@ if input_folder is not None:
                             score -= 1
                         if contains_digits(w0 + word):
                             score -= 1
-                        if w0.endswith(')') or word.endswith(')'):
-                            count -= 1
-                        if w0.endswith('*') or word.endswith('*'):
-                            count -= 1
                         if any([each.isdigit() for each in w0 + word]):
                             score -= 1
+                        if '--' in w0 + word:
+                            score -= 1
+                        if len(w0) == 1 or len(word) == 1:
+                            score -= 2
                         if any([each in bogeys for each in w0 + word]):
                             score -= 1
                         if score >= 0:
                             logging.debug('%d %d [%s] %s %d [%s]' % (score, index, w0,
-                                                                     any([each in bogeys for each in w0 + word]),
+                                                                     len(w0) == 1 or len(word) == 1,
                                                                      len(w0), word))
                         if score > 0:
                             count += 1
