@@ -30,6 +30,7 @@ input_file = None
 input_folder = None
 name_token_file = None
 bad_token_file = None
+bad_bigraphs_file = None
 limit = 0
 with open('frequencies-settings.json') as data_file:
     data = json.load(data_file)
@@ -46,6 +47,8 @@ with open('frequencies-settings.json') as data_file:
         limit = int(data['document_limit'])
         if limit == -1:
             limit = sys.maxint
+    if 'bad_bigraphs_file' in data.keys():
+        bad_bigraphs_file = data['bad_bigraphs_file']
 
 file_names = list()
 words = []
@@ -60,6 +63,11 @@ if bad_token_file is not None:
     with open(bad_token_file, 'rb') as tokens_fp:
         content = [each.strip('\n') for each in tokens_fp.readlines()]
         bad_tokens = set(content)
+bad_bigraphs = set()
+if bad_bigraphs_file is not None:
+    with open(bad_bigraphs_file, 'rb') as tokens_fp:
+        content = [each.strip('\n') for each in tokens_fp.readlines()]
+        bad_bigraphs = set(content)
 
 # todo fill this in after doing the folder case
 if input_file is not None:
@@ -89,6 +97,7 @@ if input_folder is not None:
             for index, word in enumerate(current_words):
                 if index > 0:
                     w0 = current_words[index - 1]
+                    bigraph = ' '.join([w0, word])
                     if len(word) > 0 and len(w0) > 0 and word[0].isupper() and w0[0].isupper():
                         score = 0
                         if w0 in name_tokens:
@@ -118,6 +127,8 @@ if input_folder is not None:
                         if len(w0) == 1 or len(word) == 1:
                             score -= 2
                         if any([each in bogeys for each in w0 + word]):
+                            score -= 1
+                        if bigraph in bad_bigraphs:
                             score -= 1
                         if score >= 0:
                             logging.debug('%d %d [%s] %s %d [%s]' % (score, index, w0,
