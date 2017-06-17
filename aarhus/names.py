@@ -81,6 +81,7 @@ file_count = 0
 per_file_most = list()
 count = 0
 zeros_count = 0
+seen = set()
 if input_folder is not None:
     if not input_folder.endswith('/'):
         input_folder += '/'
@@ -102,38 +103,30 @@ if input_folder is not None:
                         score = 0
                         if w0 in name_tokens:
                             score += 1
-                        if w0.isupper() and word.isupper():
+                        b0 = w0.isupper() and word.isupper()
+                        b1 = (w0.isupper() and len(w0)) or (word.isupper() and len(word)) > 1
+                        b2 = w0.isdigit() or word.isdigit()
+                        b3 = w0 in bad_tokens or word in bad_tokens
+                        b4 =  w0.split('-')[0] in bad_tokens or word.split('-')[0] in bad_tokens
+                        b5 = '\'' in word
+                        b6 = w0.endswith('\"') or word.endswith('\"')
+                        b7 = any([ord(c) > 128 for c in w0 + word])
+                        b8 = contains_digits(w0 + word)
+                        b9 = any([each.isdigit() for each in w0 + word])
+                        b10 = '--' in w0 + word
+                        b11 = any([each in bogeys for each in w0 + word])
+                        b12 = bigraph in bad_bigraphs
+                        b13 = len(w0) == 1 or len(word) == 1
+                        b14 = bigraph in seen
+                        if any([b1, b2, b4, b6, b7, b8, b10, b11]):
                             score -= 1
-                        if (w0.isupper() and len(w0)) or (word.isupper() and len(word)) > 1:
-                            score -= 1
-                        if w0.isdigit() or word.isdigit():
-                            score -= 1
-                        if w0 in bad_tokens or word in bad_tokens:
-                            score -= 1
-                        if w0.split('-')[0] in bad_tokens or word.split('-')[0] in bad_tokens:
-                            score -= 1
-                        if '\'' in word:
-                            score -= 1
-                        if w0.endswith('\"') or word.endswith('\"'):
-                            score -= 1
-                        if any([ord(c) > 128 for c in w0 + word]):
-                            score -= 1
-                        if contains_digits(w0 + word):
-                            score -= 1
-                        if any([each.isdigit() for each in w0 + word]):
-                            score -= 1
-                        if '--' in w0 + word:
-                            score -= 1
-                        if len(w0) == 1 or len(word) == 1:
+                        if any([b3, b5, b9, b12, b13, b14]):
                             score -= 2
-                        if any([each in bogeys for each in w0 + word]):
-                            score -= 1
-                        if bigraph in bad_bigraphs:
-                            score -= 1
                         if score >= 0:
                             logging.debug('%d %d [%s] %s %d [%s]' % (score, index, w0,
                                                                      len(w0) == 1 or len(word) == 1,
                                                                      len(w0), word))
+                            seen.add(bigraph)
                         if score > 0:
                             count += 1
                         elif score == 0:
