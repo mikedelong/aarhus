@@ -107,7 +107,7 @@ if input_folder is not None:
                         b1 = (w0.isupper() and len(w0)) or (word.isupper() and len(word)) > 1
                         b2 = w0.isdigit() or word.isdigit()
                         b3 = w0 in bad_tokens or word in bad_tokens
-                        b4 =  w0.split('-')[0] in bad_tokens or word.split('-')[0] in bad_tokens
+                        b4 = w0.split('-')[0] in bad_tokens or word.split('-')[0] in bad_tokens
                         b5 = '\'' in word
                         b6 = w0.endswith('\"') or word.endswith('\"')
                         b7 = any([ord(c) > 128 for c in w0 + word])
