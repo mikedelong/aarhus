@@ -108,7 +108,7 @@ if input_folder is not None:
                         b2 = w0.isdigit() or word.isdigit()
                         b3 = w0 in bad_tokens or word in bad_tokens
                         b4 = w0.split('-')[0] in bad_tokens or word.split('-')[0] in bad_tokens
-                        b5 = '\'' in word
+                        b5 = '\'' in word or '\"' in word
                         b6 = w0.endswith('\"') or word.endswith('\"')
                         b7 = any([ord(c) > 128 for c in w0 + word])
                         b8 = contains_digits(w0 + word)
@@ -118,9 +118,10 @@ if input_folder is not None:
                         b12 = bigraph in bad_bigraphs
                         b13 = len(w0) == 1 or len(word) == 1
                         b14 = bigraph in seen
+                        b15 = any([bigraph[index].isupper() and bigraph[index+1].isupper() for index, _ in enumerate(bigraph[0:-1])])
                         if any([b1, b2, b4, b6, b7, b8, b10, b11]):
                             score -= 1
-                        if any([b3, b5, b9, b12, b13, b14]):
+                        if any([b3, b5, b9, b12, b13, b14, b15]):
                             score -= 2
                         if score >= 0:
                             logging.debug('%d %d [%s] %s %d [%s]' % (score, index, w0,
