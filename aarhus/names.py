@@ -96,10 +96,15 @@ if input_folder is not None:
             current_words = [word for word in text.split()]
             current_words = [word.rstrip('?:!.,;') for word in current_words]
             for index, word in enumerate(current_words):
-                if index > 0:
+                if index > 1:
                     w0 = current_words[index - 1]
                     bigraph = ' '.join([w0, word])
-                    if len(word) > 0 and len(w0) > 0 and word[0].isupper() and w0[0].isupper():
+                    w1 = current_words[index - 2]
+                    trigraph = ' '.join([w1, w0, word])
+                    if all([len(word) > 0, len(w0) > 0, len(w1) > 0]) and all(
+                            [word[0].isupper(), w0[0].isupper(), w1[0].isupper()]):
+                        logging.debug(trigraph)
+                    if all([len(word) > 0, len(w0) > 0]) and all([word[0].isupper(), w0[0].isupper()]):
                         score = 0
                         if w0 in name_tokens:
                             score += 1
@@ -118,7 +123,8 @@ if input_folder is not None:
                         b12 = bigraph in bad_bigraphs
                         b13 = len(w0) == 1 or len(word) == 1
                         b14 = bigraph in seen
-                        b15 = any([bigraph[index].isupper() and bigraph[index+1].isupper() for index, _ in enumerate(bigraph[0:-1])])
+                        b15 = any([bigraph[index].isupper() and bigraph[index + 1].isupper() for index, _ in
+                                   enumerate(bigraph[0:-1])])
                         if any([b1, b2, b4, b6, b7, b8, b10, b11]):
                             score -= 1
                         if any([b3, b5, b9, b12, b13, b14, b15]):
