@@ -103,7 +103,12 @@ if input_folder is not None:
                     trigraph = ' '.join([w1, w0, word])
                     if all([len(word) > 0, len(w0) > 0, len(w1) > 0]) and all(
                             [word[0].isupper(), w0[0].isupper(), w1[0].isupper()]):
-                        logging.debug(trigraph)
+                        score = 0
+                        b0 = w1.isupper() and w0.isupper() and word.isupper()
+                        if any([b0]):
+                            score -= 1
+                        if score >= 0:
+                            logging.debug('%d : %s' % (score, trigraph))
                     if all([len(word) > 0, len(w0) > 0]) and all([word[0].isupper(), w0[0].isupper()]):
                         score = 0
                         if w0 in name_tokens:
