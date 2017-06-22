@@ -104,8 +104,24 @@ if input_folder is not None:
                     if all([len(word) > 0, len(w0) > 0, len(w1) > 0]) and all(
                             [word[0].isupper(), w0[0].isupper(), w1[0].isupper()]):
                         score = 0
-                        b0 = w1.isupper() and w0.isupper() and word.isupper()
-                        if any([b0]):
+                        b0 = w0.isupper()
+                        b1 = w1.isupper()
+                        b2 = word.isupper()
+                        b3 = len(w0) > 1
+                        b4 = len(w1) > 1
+                        b5 = len(word) > 1
+                        b6 = b0 and b3
+                        b7 = b1 and b4
+                        b8 = b2 and b5
+                        b9 = len(w0) == 1
+                        b10 = len(w1) == 1
+                        b11 = len(word) == 1
+                        b12 = b0 and b9
+                        b13 = b1 and b10
+                        b14 = b2 and b11
+                        b15 = b12 and b13 and b14
+                        b16 = len(bad_tokens.intersection({w0, w1, word})) > 0
+                        if any([b6, b7, b8, b15, b16]):
                             score -= 1
                         if score >= 0:
                             logging.debug('%d : %s' % (score, trigraph))
