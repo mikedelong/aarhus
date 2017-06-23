@@ -121,7 +121,12 @@ if input_folder is not None:
                         b14 = b2 and b11
                         b15 = b12 and b13 and b14
                         b16 = len(bad_tokens.intersection({w0, w1, word})) > 0
+                        b17 = w1 in name_tokens
+                        if b17:
+                            score += 1
                         if any([b6, b7, b8, b15, b16]):
+                            score -= 1
+                        if any([b16]):
                             score -= 1
                         if score >= 0:
                             logging.debug('%d : %s' % (score, trigraph))
