@@ -31,6 +31,7 @@ input_folder = None
 name_token_file = None
 bad_token_file = None
 bad_bigraphs_file = None
+bad_trigraphs_file = None
 limit = 0
 with open('frequencies-settings.json') as data_file:
     data = json.load(data_file)
@@ -49,6 +50,8 @@ with open('frequencies-settings.json') as data_file:
             limit = sys.maxint
     if 'bad_bigraphs_file' in data.keys():
         bad_bigraphs_file = data['bad_bigraphs_file']
+    if 'bad_trigraphs_file' in data.keys():
+        bad_trigraphs_file = data['bad_trigraphs_file']
 
 file_names = list()
 words = []
@@ -68,6 +71,11 @@ if bad_bigraphs_file is not None:
     with open(bad_bigraphs_file, 'rb') as tokens_fp:
         content = [each.strip('\n') for each in tokens_fp.readlines()]
         bad_bigraphs = set(content)
+bad_trigraphs = set()
+if bad_trigraphs_file is not None:
+    with open(bad_trigraphs_file, 'rb') as tokens_fp:
+        content = [each.strip('\n') for each in tokens_fp.readlines()]
+        bad_trigraphs = set(content)
 
 # todo fill this in after doing the folder case
 if input_file is not None:
@@ -122,9 +130,10 @@ if input_folder is not None:
                         b15 = b12 and b13 and b14
                         b16 = len(bad_tokens.intersection({w0, w1, word})) > 0
                         b17 = w1 in name_tokens
+                        b18 = trigraph in bad_trigraphs
                         if b17:
                             score += 1
-                        if any([b6, b7, b8, b15, b16]):
+                        if any([b6, b7, b8, b15, b16, b18]):
                             score -= 1
                         if any([b16]):
                             score -= 1
