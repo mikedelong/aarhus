@@ -4,6 +4,7 @@ import sys
 import time
 import json
 import os
+import pyzmail
 
 # http://mypy.pythonblogs.com/12_mypy/archive/1253_workaround_for_python_bug_ascii_codec_cant_encode_character_uxa0_in_position_111_ordinal_not_in_range128.html
 reload(sys)
@@ -12,7 +13,7 @@ sys.setdefaultencoding("utf8")
 logging.basicConfig(format='%(asctime)s : %(levelname)s :: %(message)s', level=logging.DEBUG)
 
 
-def process_folder(self, arg_folder, arg_reference, arg_in_or_out):
+def process_folder(arg_folder, arg_reference, arg_in_or_out, arg_document_count_limit):
     result = []
     document_count = 0
     no_references_count = 0
@@ -21,11 +22,11 @@ def process_folder(self, arg_folder, arg_reference, arg_in_or_out):
     for root, subdirectories, files in os.walk(arg_folder):
         for current in files:
             # first get the references node
-            if document_count < self.document_count_limit:
+            if document_count < arg_document_count_limit:
                 current_full_file_name = os.path.join(root, current)
                 if document_count % 1000 == 0 and document_count > 0:
                     logging.debug("%d %s", document_count, current_full_file_name)
-                references = self.get_references(current_full_file_name)
+                references = get_references(current_full_file_name)
                 if 'references' in references.keys():
                     # if references.has_key('references'):
                     references_count += 1
@@ -43,6 +44,27 @@ def process_folder(self, arg_folder, arg_reference, arg_in_or_out):
 
     logging.info('documents : %d message-id: %d references: %d no references: %d' % (
         document_count, message_id_count, references_count, no_references_count))
+    return result
+
+
+def get_references(current_file):
+    result = {}
+    with open(current_file, 'rb') as fp:
+        message = pyzmail.message_from_file(fp)
+        if 'Message-Id' in message.keys():
+            result['message-id'] = message['Message-Id']
+        elif 'Message-ID' in message.keys():
+            result['message-id'] = message['Message-ID']
+        elif 'Message-id' in message.keys():
+            result['message-id'] = message['Message-id']
+        else:
+            logging.warn('no message id in file %s', current_file)
+            logging.info([key for key in message.keys()])
+        if 'References' in message.keys():
+            references = message['References'].split(' ')
+            result['references'] = references
+        if 'In-Reply-To' in message.keys():
+            result['in-reply-to'] = message['In-Reply-To']
     return result
 
 
@@ -76,6 +98,9 @@ def run():
         manifold = data['manifold']
         manifold = str(manifold).lower()
 
+
+    document_names_of_interest = process_folder(input_folder, reference_of_interest, in_or_out, document_count_limit)
+    logging.info('found %d documents of interest: %s' % (len(document_names_of_interest), document_names_of_interest))
 
     finish_time = time.time()
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
