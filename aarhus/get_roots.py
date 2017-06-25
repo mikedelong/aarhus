@@ -3,12 +3,47 @@ import sys
 
 import time
 import json
+import os
 
 # http://mypy.pythonblogs.com/12_mypy/archive/1253_workaround_for_python_bug_ascii_codec_cant_encode_character_uxa0_in_position_111_ordinal_not_in_range128.html
 reload(sys)
 sys.setdefaultencoding("utf8")
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s :: %(message)s', level=logging.DEBUG)
+
+
+def process_folder(self, arg_folder, arg_reference, arg_in_or_out):
+    result = []
+    document_count = 0
+    no_references_count = 0
+    references_count = 0
+    message_id_count = 0
+    for root, subdirectories, files in os.walk(arg_folder):
+        for current in files:
+            # first get the references node
+            if document_count < self.document_count_limit:
+                current_full_file_name = os.path.join(root, current)
+                if document_count % 1000 == 0 and document_count > 0:
+                    logging.debug("%d %s", document_count, current_full_file_name)
+                references = self.get_references(current_full_file_name)
+                if 'references' in references.keys():
+                    # if references.has_key('references'):
+                    references_count += 1
+                else:
+                    no_references_count += 1
+                document_count += 1
+                if 'message-id' in references.keys():
+                    # if references.has_key('message-id'):
+                    message_id_count += 1
+
+                if arg_reference in references.keys() and arg_in_or_out:
+                    result.append(current)
+                elif arg_reference not in references.keys() and not arg_in_or_out:
+                    result.append(current)
+
+    logging.info('documents : %d message-id: %d references: %d no references: %d' % (
+        document_count, message_id_count, references_count, no_references_count))
+    return result
 
 
 def run():
@@ -40,6 +75,7 @@ def run():
         in_or_out = bool(in_or_out)
         manifold = data['manifold']
         manifold = str(manifold).lower()
+
 
     finish_time = time.time()
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
