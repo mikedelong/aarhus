@@ -14,7 +14,7 @@ logging.basicConfig(format='%(asctime)s : %(levelname)s :: %(message)s', level=l
 
 
 def process_folder(arg_folder, arg_reference, arg_in_or_out, arg_document_count_limit):
-    result = []
+    result = dict()
     document_count = 0
     no_references_count = 0
     references_count = 0
@@ -26,7 +26,7 @@ def process_folder(arg_folder, arg_reference, arg_in_or_out, arg_document_count_
                 current_full_file_name = os.path.join(root, current)
                 if document_count % 1000 == 0 and document_count > 0:
                     logging.debug("%d %s", document_count, current_full_file_name)
-                references = get_references(current_full_file_name)
+                references, message = get_references(current_full_file_name)
                 if 'references' in references.keys():
                     # if references.has_key('references'):
                     references_count += 1
@@ -38,9 +38,11 @@ def process_folder(arg_folder, arg_reference, arg_in_or_out, arg_document_count_
                     message_id_count += 1
 
                 if arg_reference in references.keys() and arg_in_or_out:
-                    result.append(current)
+                    # result.append(current)
+                    result[current] = message
                 elif arg_reference not in references.keys() and not arg_in_or_out:
-                    result.append(current)
+                    # result.append(current)
+                    result[current] = message
 
     logging.info('documents : %d message-id: %d references: %d no references: %d' % (
         document_count, message_id_count, references_count, no_references_count))
@@ -65,7 +67,7 @@ def get_references(current_file):
             result['references'] = references
         if 'In-Reply-To' in message.keys():
             result['in-reply-to'] = message['In-Reply-To']
-    return result
+    return result, message
 
 
 # todo get this code to find just the roots of email chains, not the replies
@@ -100,8 +102,8 @@ def run():
         manifold = str(manifold).lower()
 
 
-    document_names_of_interest = process_folder(input_folder, reference_of_interest, in_or_out, document_count_limit)
-    logging.info('found %d documents of interest: %s' % (len(document_names_of_interest), document_names_of_interest))
+    documents_of_interest = process_folder(input_folder, reference_of_interest, in_or_out, document_count_limit)
+    logging.info('found %d documents of interest: %s' % (len(documents_of_interest), sorted(documents_of_interest.keys())))
 
     finish_time = time.time()
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
