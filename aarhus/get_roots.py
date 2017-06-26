@@ -1,11 +1,11 @@
-import logging
-import sys
-
-import time
 import json
+import logging
 import os
-import pyzmail
 import pickle
+import sys
+import time
+
+import pyzmail
 
 # http://mypy.pythonblogs.com/12_mypy/archive/1253_workaround_for_python_bug_ascii_codec_cant_encode_character_uxa0_in_position_111_ordinal_not_in_range128.html
 reload(sys)
@@ -101,9 +101,9 @@ def run():
         in_or_out = bool(in_or_out)
         pickle_file = data['pickle_file']
 
-
     documents_of_interest = process_folder(input_folder, reference_of_interest, in_or_out, document_count_limit)
-    logging.info('found %d documents of interest: %s' % (len(documents_of_interest), sorted(documents_of_interest.keys())))
+    logging.info(
+        'found %d documents of interest: %s' % (len(documents_of_interest), sorted(documents_of_interest.keys())))
 
     with open(pickle_file, 'wb') as output_fp:
         pickle.dump(documents_of_interest, output_fp)
@@ -114,6 +114,7 @@ def run():
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
     elapsed_minutes, elapsed_seconds = divmod(elapsed_remainder, 60)
     logging.info("Time: {:0>2}:{:0>2}:{:05.2f}".format(int(elapsed_hours), int(elapsed_minutes), elapsed_seconds))
+
 
 if __name__ == '__main__':
     run()
