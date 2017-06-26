@@ -5,6 +5,7 @@ import time
 import json
 import os
 import pyzmail
+import pickle
 
 # http://mypy.pythonblogs.com/12_mypy/archive/1253_workaround_for_python_bug_ascii_codec_cant_encode_character_uxa0_in_position_111_ordinal_not_in_range128.html
 reload(sys)
@@ -98,12 +99,16 @@ def run():
         reference_of_interest = reference_of_interest.lower()
         in_or_out = data['reference_in']
         in_or_out = bool(in_or_out)
-        manifold = data['manifold']
-        manifold = str(manifold).lower()
+        pickle_file = data['pickle_file']
 
 
     documents_of_interest = process_folder(input_folder, reference_of_interest, in_or_out, document_count_limit)
     logging.info('found %d documents of interest: %s' % (len(documents_of_interest), sorted(documents_of_interest.keys())))
+
+    with open(pickle_file, 'wb') as output_fp:
+        pickle.dump(documents_of_interest, output_fp)
+    logging.info('wrote pickled dictionary to %s.' % pickle_file)
+    # todo write a reader/processor for the pickle file
 
     finish_time = time.time()
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
