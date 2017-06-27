@@ -71,7 +71,6 @@ def get_references(current_file):
     return result, message
 
 
-# todo get this code to find just the roots of email chains, not the replies
 def run():
     start_time = time.time()
 
