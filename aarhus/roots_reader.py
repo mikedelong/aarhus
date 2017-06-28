@@ -18,7 +18,7 @@ def run():
     with open(pickle_file, 'rb') as input_fp:
         roots = pickle.load(input_fp)
 
-    logging.debug(len(roots))
+    logging.debug('we have %d messages.' % len(roots))
 
     finish_time = time.time()
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
