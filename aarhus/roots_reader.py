@@ -1,15 +1,11 @@
-
-
+import json
 import logging
 import pickle
 import time
-import sys
-import json
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s :: %(message)s', level=logging.DEBUG)
 
 
-# todo get this code to find just the roots of email chains, not the replies
 def run():
     start_time = time.time()
     logging.debug('started.')
@@ -19,8 +15,6 @@ def run():
         logging.debug(data)
         pickle_file = data['pickle_file']
 
-
-    roots = None
     with open(pickle_file, 'rb') as input_fp:
         roots = pickle.load(input_fp)
 
