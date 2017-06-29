@@ -3,6 +3,8 @@ import logging
 import pickle
 import time
 import sys
+from nltk.stem.snowball import SnowballStemmer
+from nltk.corpus import stopwords
 
 # http://mypy.pythonblogs.com/12_mypy/archive/1253_workaround_for_python_bug_ascii_codec_cant_encode_character_uxa0_in_position_111_ordinal_not_in_range128.html
 reload(sys)
@@ -10,7 +12,8 @@ sys.setdefaultencoding("utf8")
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s :: %(message)s', level=logging.DEBUG)
 
-
+stemmer = SnowballStemmer('english')
+stopwords = stopwords.words('english')
 def get_character_sets(arg_message):
     charsets = set({})
     for character_set in arg_message.get_charsets():
@@ -77,6 +80,7 @@ def run():
     limit = sys.maxint
     count = 0
     success = 0
+    result = dict()
     for key in roots.keys():
 
         value = roots[key]
@@ -84,9 +88,28 @@ def run():
             body = get_email_body(value)
             if body is not None:
                 success += 1
-            # logging.debug(get_email_body(value))
+                try:
+                    tokens = body.split()
+                    tokens = [stemmer.stem(token).lower() for token in tokens]
+                    tokens = [token for token in tokens if token not in stopwords]
+                    logging.debug(len(tokens))
+                    if len(tokens) == 0:
+                        success -= 1
+                    if len(tokens) >= 10:
+                        result[key] = tokens
+                except UnicodeDecodeError as unicodeDecodeError:
+                    logging.warn(unicodeDecodeError)
+                    success -= 1
+                pass
+
         count += 1
 
+    logging.debug('resulting tokens array has length %d' % len(result))
+    # write out the tokens
+    output_pickle_file = './tokens.pickle'
+    with open(output_pickle_file, 'wb') as output_fp:
+        pickle.dump(result, output_fp)
+    logging.debug('wrote %s' % output_pickle_file)
     logging.debug('%d %d %d' % (count, limit, success))
     finish_time = time.time()
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
