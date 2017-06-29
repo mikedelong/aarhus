@@ -1,10 +1,11 @@
 import json
 import logging
 import pickle
-import time
 import sys
-from nltk.stem.snowball import SnowballStemmer
+import time
+
 from nltk.corpus import stopwords
+from nltk.stem.snowball import SnowballStemmer
 
 # http://mypy.pythonblogs.com/12_mypy/archive/1253_workaround_for_python_bug_ascii_codec_cant_encode_character_uxa0_in_position_111_ordinal_not_in_range128.html
 reload(sys)
@@ -14,6 +15,8 @@ logging.basicConfig(format='%(asctime)s : %(levelname)s :: %(message)s', level=l
 
 stemmer = SnowballStemmer('english')
 stopwords = stopwords.words('english')
+
+
 def get_character_sets(arg_message):
     charsets = set({})
     for character_set in arg_message.get_charsets():
