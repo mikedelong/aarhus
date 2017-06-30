@@ -14,6 +14,12 @@ def run():
     start_time = time.time()
     logging.debug('started.')
 
+    input_pickle_file = './tokens.pickle'
+    logging.debug('loading tokens dictionary from file %s' % input_pickle_file)
+    with open(input_pickle_file, 'rb') as input_fp:
+        tokens_dict = pickle.load(input_fp)
+
+    logging.debug(len(tokens_dict))
     finish_time = time.time()
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
     elapsed_minutes, elapsed_seconds = divmod(elapsed_remainder, 60)
