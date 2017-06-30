@@ -1,4 +1,3 @@
-
 import logging
 import pickle
 import sys
@@ -10,6 +9,7 @@ sys.setdefaultencoding("utf8")
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s :: %(message)s', level=logging.DEBUG)
 
+
 def run():
     start_time = time.time()
     logging.debug('started.')
@@ -19,7 +19,6 @@ def run():
     logging.debug('loading tokens dictionary from file %s' % input_pickle_file)
     with open(input_pickle_file, 'rb') as input_fp:
         tokens_dict = pickle.load(input_fp)
-
 
     logging.debug('we have tokens for %d messages.' % len(tokens_dict))
 
