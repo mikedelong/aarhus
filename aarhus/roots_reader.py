@@ -109,6 +109,7 @@ def run():
 
     logging.debug('resulting tokens array has length %d' % len(result))
     # write out the tokens
+    # todo move this to config
     output_pickle_file = './tokens.pickle'
     with open(output_pickle_file, 'wb') as output_fp:
         pickle.dump(result, output_fp)
