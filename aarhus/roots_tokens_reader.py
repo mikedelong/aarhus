@@ -14,6 +14,7 @@ def run():
     start_time = time.time()
     logging.debug('started.')
 
+    # todo move input pickle file name to settings
     input_pickle_file = './tokens.pickle'
     logging.debug('loading tokens dictionary from file %s' % input_pickle_file)
     with open(input_pickle_file, 'rb') as input_fp:
