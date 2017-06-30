@@ -20,7 +20,10 @@ def run():
     with open(input_pickle_file, 'rb') as input_fp:
         tokens_dict = pickle.load(input_fp)
 
+
     logging.debug('we have tokens for %d messages.' % len(tokens_dict))
+
+    # todo start building clusters
     finish_time = time.time()
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
     elapsed_minutes, elapsed_seconds = divmod(elapsed_remainder, 60)
