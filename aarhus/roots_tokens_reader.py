@@ -2,6 +2,7 @@ import logging
 import pickle
 import sys
 import time
+import json
 
 # http://mypy.pythonblogs.com/12_mypy/archive/1253_workaround_for_python_bug_ascii_codec_cant_encode_character_uxa0_in_position_111_ordinal_not_in_range128.html
 reload(sys)
@@ -14,8 +15,11 @@ def run():
     start_time = time.time()
     logging.debug('started.')
 
-    # todo move input pickle file name to settings
-    input_pickle_file = './tokens.pickle'
+    with open('roots-tokens-settings.json') as data_file:
+        data = json.load(data_file)
+        logging.debug(data)
+        input_pickle_file = data['input_pickle_file']
+
     logging.debug('loading tokens dictionary from file %s' % input_pickle_file)
     with open(input_pickle_file, 'rb') as input_fp:
         tokens_dict = pickle.load(input_fp)
