@@ -74,9 +74,10 @@ def run():
     with open('roots-settings.json') as data_file:
         data = json.load(data_file)
         logging.debug(data)
-        pickle_file = data['pickle_file']
+        input_pickle_file = data['input_pickle_file']
+        output_pickle_file = data['output_pickle_file']
 
-    with open(pickle_file, 'rb') as input_fp:
+    with open(input_pickle_file, 'rb') as input_fp:
         roots = pickle.load(input_fp)
 
     logging.debug('we have %d messages.' % len(roots))
@@ -109,8 +110,6 @@ def run():
 
     logging.debug('resulting tokens array has length %d' % len(result))
     # write out the tokens
-    # todo move this to config
-    output_pickle_file = './tokens.pickle'
     with open(output_pickle_file, 'wb') as output_fp:
         pickle.dump(result, output_fp)
     logging.debug('wrote %s' % output_pickle_file)
