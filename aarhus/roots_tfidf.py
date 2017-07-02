@@ -6,6 +6,8 @@ import time
 
 from nltk.corpus import stopwords
 from nltk.stem.snowball import SnowballStemmer
+from sklearn import metrics
+from sklearn.cluster import KMeans, MiniBatchKMeans
 from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.pipeline import make_pipeline
@@ -130,6 +132,30 @@ def run():
     logging.debug('with %d documents, %d components, and %d features we have %.2f explained variance.' %
                   (len(X), n_components, n_features, explained_variance))
 
+    minibatch = True
+    true_k = 20
+    verbose = True
+    if minibatch:
+        km = MiniBatchKMeans(n_clusters=true_k, init='k-means++', n_init=1,
+                             init_size=1000, batch_size=1000, verbose=verbose)
+    else:
+        km = KMeans(n_clusters=true_k, init='k-means++', max_iter=100, n_init=1,verbose=verbose)
+
+    logging.debug("Clustering sparse data with %s" % km)
+    km.fit(X)
+    # logging.debug("Homogeneity: %0.3f" % metrics.homogeneity_score(labels, km.labels_))
+    # logging.debug("Completeness: %0.3f" % metrics.completeness_score(labels, km.labels_))
+    # logging.debug("V-measure: %0.3f" % metrics.v_measure_score(labels, km.labels_))
+    # logging.debug("Adjusted Rand-Index: %.3f" % metrics.adjusted_rand_score(labels, km.labels_))
+    logging.debug("Silhouette Coefficient: %0.3f"% metrics.silhouette_score(X, km.labels_, sample_size=1000))
+    logging.debug("Top terms per cluster:")
+
+    original_space_centroids = svd.inverse_transform(km.cluster_centers_)
+    order_centroids = original_space_centroids.argsort()[:, ::-1]
+
+    terms = vectorizer.get_feature_names()
+    for i in range(true_k):
+        logging.debug('Cluster %d: %s' % (i, [terms[index] for index in order_centroids[i, :10]]))
     if False:
         # write out the tokens
         logging.debug('resulting tokens array has length %d' % len(result))
