@@ -143,6 +143,7 @@ def run():
 
     logging.debug("Clustering sparse data with %s" % km)
     km.fit(X)
+    # todo find a way to associate message names with clusters
     # logging.debug("Homogeneity: %0.3f" % metrics.homogeneity_score(labels, km.labels_))
     # logging.debug("Completeness: %0.3f" % metrics.completeness_score(labels, km.labels_))
     # logging.debug("V-measure: %0.3f" % metrics.v_measure_score(labels, km.labels_))
