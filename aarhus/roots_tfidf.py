@@ -81,7 +81,7 @@ def run():
         input_pickle_file = data['input_pickle_file']
         output_pickle_file = data['output_pickle_file']
 
-    n_components = 2000
+    n_components = 1200
     svd = TruncatedSVD(n_components)
     normalizer = Normalizer(copy=False)
     lsa = make_pipeline(svd, normalizer)
@@ -98,7 +98,7 @@ def run():
     # http://scikit-learn.org/stable/auto_examples/text/document_clustering.html
     logging.debug('we have %d messages.' % len(roots))
     limit = sys.maxint
-    limit = 10000
+    limit = 5000
     count = 0
     success = 0
     result = dict()
@@ -110,19 +110,7 @@ def run():
             body = get_email_body(value)
             if body is not None:
                 if False:
-                    success += 1
-                    try:
-                        tokens = body.split()
-                        tokens = [stemmer.stem(token).lower() for token in tokens]
-                        tokens = [token for token in tokens if token not in stopwords]
-                        logging.debug(len(tokens))
-                        if len(tokens) == 0:
-                            success -= 1
-                        if len(tokens) >= 10:
-                            result[key] = tokens
-                    except UnicodeDecodeError as unicodeDecodeError:
-                        logging.warn(unicodeDecodeError)
-                        success -= 1
+                    pass
                 else:
                     try:
                         decoded = body.decode('utf-8', 'ignore')
@@ -142,12 +130,14 @@ def run():
     logging.debug('with %d documents, %d components, and %d features we have %.2f explained variance.' %
                   (len(X), n_components, n_features, explained_variance))
 
-    logging.debug('resulting tokens array has length %d' % len(result))
-    # write out the tokens
-    with open(output_pickle_file, 'wb') as output_fp:
-        pickle.dump(result, output_fp)
-    logging.debug('wrote %s' % output_pickle_file)
-    logging.debug('%d %d %d' % (count, limit, success))
+    if False:
+        # write out the tokens
+        logging.debug('resulting tokens array has length %d' % len(result))
+        with open(output_pickle_file, 'wb') as output_fp:
+            pickle.dump(result, output_fp)
+        logging.debug('wrote %s' % output_pickle_file)
+        logging.debug('%d %d %d' % (count, limit, success))
+
     finish_time = time.time()
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
     elapsed_minutes, elapsed_seconds = divmod(elapsed_remainder, 60)
