@@ -77,7 +77,6 @@ def get_email_body(arg_message):
     return body
 
 
-
 def run():
     start_time = time.time()
     logging.debug('started.')
@@ -94,17 +93,15 @@ def run():
     lsa = make_pipeline(svd, normalizer)
 
     n_features = 200000
-    use_idf  = True
+    use_idf = True
     vectorizer = TfidfVectorizer(max_df=0.5, max_features=n_features,
                                  min_df=2, stop_words='english',
                                  use_idf=use_idf)
 
-
-
     with open(input_pickle_file, 'rb') as input_fp:
         roots = pickle.load(input_fp)
 
-# http://scikit-learn.org/stable/auto_examples/text/document_clustering.html
+    # http://scikit-learn.org/stable/auto_examples/text/document_clustering.html
     logging.debug('we have %d messages.' % len(roots))
     limit = sys.maxint
     limit = 10000
@@ -150,7 +147,6 @@ def run():
     explained_variance = svd.explained_variance_ratio_.sum()
     logging.debug('with %d documents, %d components, and %d features we have %.2f explained variance.' %
                   (len(X), n_components, n_features, explained_variance))
-
 
     logging.debug('resulting tokens array has length %d' % len(result))
     # write out the tokens
