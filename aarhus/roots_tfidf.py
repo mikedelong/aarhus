@@ -81,9 +81,9 @@ def run():
         data = json.load(data_file)
         logging.debug(data)
         input_pickle_file = data['input_pickle_file']
-        output_pickle_file = data['output_pickle_file']
         min_df = float(data['min_df'])
         max_df = float(data['max_df'])
+        random_state = int(data['random_state'])
 
     n_components = 1200
     svd = TruncatedSVD(n_components)
@@ -94,6 +94,16 @@ def run():
     use_idf = True
     vectorizer = TfidfVectorizer(max_df=max_df, max_features=n_features, min_df=min_df, stop_words='english',
                                  use_idf=use_idf)
+
+    minibatch = True
+    true_k = 20
+    verbose = True
+    if minibatch:
+        km = MiniBatchKMeans(batch_size=1000, init='k-means++', init_size=1000, n_clusters=true_k, n_init=1,
+            random_state=random_state,verbose=verbose)
+    else:
+        km = KMeans(init='k-means++', max_iter=100, n_clusters=true_k, n_init=1, random_state=random_state,
+            verbose=verbose)
 
     with open(input_pickle_file, 'rb') as input_fp:
         roots = pickle.load(input_fp)
@@ -132,14 +142,6 @@ def run():
     logging.debug('with %d documents, %d components, and %d features we have %.2f explained variance.' %
                   (len(X), n_components, n_features, explained_variance))
 
-    minibatch = True
-    true_k = 20
-    verbose = True
-    if minibatch:
-        km = MiniBatchKMeans(n_clusters=true_k, init='k-means++', n_init=1,
-                             init_size=1000, batch_size=1000, verbose=verbose)
-    else:
-        km = KMeans(n_clusters=true_k, init='k-means++', max_iter=100, n_init=1, verbose=verbose)
 
     logging.debug("Clustering sparse data with %s" % km)
     km.fit(X)
