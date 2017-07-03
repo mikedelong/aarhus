@@ -86,7 +86,7 @@ def run():
         random_state = int(data['random_state'])
 
     n_components = 1200
-    svd = TruncatedSVD(n_components)
+    svd = TruncatedSVD(n_components, random_state=random_state)
     normalizer = Normalizer(copy=False)
     lsa = make_pipeline(svd, normalizer)
 
