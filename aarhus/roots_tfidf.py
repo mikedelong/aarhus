@@ -139,7 +139,7 @@ def run():
         km = MiniBatchKMeans(n_clusters=true_k, init='k-means++', n_init=1,
                              init_size=1000, batch_size=1000, verbose=verbose)
     else:
-        km = KMeans(n_clusters=true_k, init='k-means++', max_iter=100, n_init=1,verbose=verbose)
+        km = KMeans(n_clusters=true_k, init='k-means++', max_iter=100, n_init=1, verbose=verbose)
 
     logging.debug("Clustering sparse data with %s" % km)
     km.fit(X)
@@ -148,7 +148,7 @@ def run():
     # logging.debug("Completeness: %0.3f" % metrics.completeness_score(labels, km.labels_))
     # logging.debug("V-measure: %0.3f" % metrics.v_measure_score(labels, km.labels_))
     # logging.debug("Adjusted Rand-Index: %.3f" % metrics.adjusted_rand_score(labels, km.labels_))
-    logging.debug("Silhouette Coefficient: %0.3f"% metrics.silhouette_score(X, km.labels_, sample_size=1000))
+    logging.debug("Silhouette Coefficient: %0.3f" % metrics.silhouette_score(X, km.labels_, sample_size=1000))
     logging.debug("Top terms per cluster:")
 
     original_space_centroids = svd.inverse_transform(km.cluster_centers_)
@@ -157,7 +157,7 @@ def run():
     terms = vectorizer.get_feature_names()
     for i in range(true_k):
         logging.debug('Cluster %d: %d : %s' % (i, km.counts_[i], [terms[index] for index in order_centroids[i, :10]]))
-    # logging.debug(km.counts_)
+
     finish_time = time.time()
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
     elapsed_minutes, elapsed_seconds = divmod(elapsed_remainder, 60)
