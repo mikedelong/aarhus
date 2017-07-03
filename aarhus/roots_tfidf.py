@@ -77,11 +77,13 @@ def run():
     start_time = time.time()
     logging.debug('started.')
 
-    with open('roots-settings.json') as data_file:
+    with open('roots-tfidf-settings.json') as data_file:
         data = json.load(data_file)
         logging.debug(data)
         input_pickle_file = data['input_pickle_file']
         output_pickle_file = data['output_pickle_file']
+        min_df = float(data['min_df'])
+        max_df = float(data['max_df'])
 
     n_components = 1200
     svd = TruncatedSVD(n_components)
@@ -90,8 +92,7 @@ def run():
 
     n_features = 200000
     use_idf = True
-    vectorizer = TfidfVectorizer(max_df=0.5, max_features=n_features,
-                                 min_df=2, stop_words='english',
+    vectorizer = TfidfVectorizer(max_df=max_df, max_features=n_features, min_df=min_df, stop_words='english',
                                  use_idf=use_idf)
 
     with open(input_pickle_file, 'rb') as input_fp:
