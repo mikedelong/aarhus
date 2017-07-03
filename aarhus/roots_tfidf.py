@@ -97,7 +97,7 @@ def run():
                                  use_idf=use_idf)
 
     minibatch = True
-    true_k = 30
+    true_k = 50
     verbose = True
     if minibatch:
         km = MiniBatchKMeans(batch_size=1000, init='k-means++', init_size=1000, n_clusters=true_k, n_init=1,
@@ -114,10 +114,8 @@ def run():
     limit = sys.maxint
     limit = 5000
     count = 0
-    success = 0
     X = list()
     for key in roots.keys():
-
         value = roots[key]
         if count < limit:
             body = get_email_body(value)
@@ -131,7 +129,6 @@ def run():
                     except UnicodeDecodeError as unicodeDecodeError:
                         logging.warn(unicodeDecodeError)
                     pass
-
         count += 1
 
     logging.debug('data extraction complete. About to start TFIDF.')
