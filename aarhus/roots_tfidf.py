@@ -156,8 +156,8 @@ def run():
 
     terms = vectorizer.get_feature_names()
     for i in range(true_k):
-        logging.debug('Cluster %d: %s' % (i, [terms[index] for index in order_centroids[i, :10]]))
-
+        logging.debug('Cluster %d: %d : %s' % (i, km.counts_[i], [terms[index] for index in order_centroids[i, :10]]))
+    # logging.debug(km.counts_)
     finish_time = time.time()
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
     elapsed_minutes, elapsed_seconds = divmod(elapsed_remainder, 60)
