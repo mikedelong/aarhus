@@ -84,6 +84,7 @@ def run():
         min_df = float(data['min_df'])
         max_df = float(data['max_df'])
         random_state = int(data['random_state'])
+        terms_to_print = int(data['terms_to_print'])
 
     n_components = 1200
     svd = TruncatedSVD(n_components, random_state=random_state)
@@ -96,14 +97,14 @@ def run():
                                  use_idf=use_idf)
 
     minibatch = True
-    true_k = 20
+    true_k = 30
     verbose = True
     if minibatch:
         km = MiniBatchKMeans(batch_size=1000, init='k-means++', init_size=1000, n_clusters=true_k, n_init=1,
-            random_state=random_state,verbose=verbose)
+                             random_state=random_state, verbose=verbose)
     else:
         km = KMeans(init='k-means++', max_iter=100, n_clusters=true_k, n_init=1, random_state=random_state,
-            verbose=verbose)
+                    verbose=verbose)
 
     with open(input_pickle_file, 'rb') as input_fp:
         roots = pickle.load(input_fp)
@@ -142,23 +143,16 @@ def run():
     logging.debug('with %d documents, %d components, and %d features we have %.2f explained variance.' %
                   (len(X), n_components, n_features, explained_variance))
 
-
     logging.debug("Clustering sparse data with %s" % km)
     km.fit(X)
-    # todo find a way to associate message names with clusters
-    # logging.debug("Homogeneity: %0.3f" % metrics.homogeneity_score(labels, km.labels_))
-    # logging.debug("Completeness: %0.3f" % metrics.completeness_score(labels, km.labels_))
-    # logging.debug("V-measure: %0.3f" % metrics.v_measure_score(labels, km.labels_))
-    # logging.debug("Adjusted Rand-Index: %.3f" % metrics.adjusted_rand_score(labels, km.labels_))
     logging.debug("Silhouette Coefficient: %0.3f" % metrics.silhouette_score(X, km.labels_, sample_size=1000))
     logging.debug("Top terms per cluster:")
-
     original_space_centroids = svd.inverse_transform(km.cluster_centers_)
     order_centroids = original_space_centroids.argsort()[:, ::-1]
-
     terms = vectorizer.get_feature_names()
-    for i in range(true_k):
-        logging.debug('Cluster %d: %d : %s' % (i, km.counts_[i], [terms[index] for index in order_centroids[i, :10]]))
+    for jndex in range(true_k):
+        logging.debug('Cluster %d: %d : %s' % (
+        jndex, km.counts_[jndex], [terms[index] for index in order_centroids[jndex, :terms_to_print]]))
 
     finish_time = time.time()
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
