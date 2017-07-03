@@ -104,7 +104,6 @@ def run():
     limit = 5000
     count = 0
     success = 0
-    result = dict()
     X = list()
     for key in roots.keys():
 
@@ -158,13 +157,6 @@ def run():
     terms = vectorizer.get_feature_names()
     for i in range(true_k):
         logging.debug('Cluster %d: %s' % (i, [terms[index] for index in order_centroids[i, :10]]))
-    if False:
-        # write out the tokens
-        logging.debug('resulting tokens array has length %d' % len(result))
-        with open(output_pickle_file, 'wb') as output_fp:
-            pickle.dump(result, output_fp)
-        logging.debug('wrote %s' % output_pickle_file)
-        logging.debug('%d %d %d' % (count, limit, success))
 
     finish_time = time.time()
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
