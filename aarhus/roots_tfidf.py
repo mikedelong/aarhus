@@ -94,12 +94,16 @@ def run():
     normalizer = Normalizer(copy=False)
     lsa = make_pipeline(svd, normalizer)
 
+    # todo  move this to a setting
     use_idf = True
     vectorizer = TfidfVectorizer(max_df=max_df, max_features=n_features, min_df=min_df, stop_words='english',
                                  use_idf=use_idf)
 
+    # todo  move this to a setting
     minibatch = True
+    # todo  move this to a setting
     true_k = 50
+    # todo  move this to a setting
     verbose = True
     if minibatch:
         km = MiniBatchKMeans(batch_size=1000, init='k-means++', init_size=1000, n_clusters=true_k, n_init=1,
