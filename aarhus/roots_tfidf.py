@@ -102,7 +102,7 @@ def run():
     # todo  move this to a setting
     minibatch = True
     # todo  move this to a setting
-    true_k = 50
+    true_k = 100
     # todo  move this to a setting
     verbose = True
     if minibatch:
@@ -155,6 +155,8 @@ def run():
         logging.debug('Cluster %d: %d : %s' % (
         jndex, km.counts_[jndex], [terms[index] for index in order_centroids[jndex, :terms_to_print]]))
 
+    logging.debug('The vocabulary contains %d words.' % len(vectorizer.vocabulary_.keys()))
+    logging.debug('The model found %d stopwords.' % len(vectorizer.stop_words_))
     finish_time = time.time()
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
     elapsed_minutes, elapsed_seconds = divmod(elapsed_remainder, 60)
