@@ -80,6 +80,8 @@ def run():
     with open('roots-tfidf-settings.json') as data_file:
         data = json.load(data_file)
         logging.debug(data)
+        limit = int(data['document_count_limit'])
+        limit = sys.maxint if limit == -1 else limit
         input_pickle_file = data['input_pickle_file']
         min_df = float(data['min_df'])
         max_df = float(data['max_df'])
@@ -111,8 +113,6 @@ def run():
 
     # http://scikit-learn.org/stable/auto_examples/text/document_clustering.html
     logging.debug('we have %d messages.' % len(roots))
-    limit = sys.maxint
-    limit = 5000
     count = 0
     X = list()
     for key in roots.keys():
