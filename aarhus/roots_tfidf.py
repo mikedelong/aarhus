@@ -159,9 +159,14 @@ def run():
             jndex, km.counts_[jndex], [terms[index] for index in order_centroids[jndex, :terms_to_print]]))
 
     logging.debug('The vocabulary contains %d words.' % len(vectorizer.vocabulary_.keys()))
-    # todo move this to a setting
-    tfidf_vocabulary_file = './roots_tfidf_vocabulary_out.csv'
-    logging.debug('')
+    if write_tfidf_vocabulary:
+        # todo move this to a setting
+        tfidf_vocabulary_file = './roots_tfidf_vocabulary_out.csv'
+        logging.debug('Writing tf-idf vocabulary to %s' % tfidf_vocabulary_file)
+        with open(tfidf_vocabulary_file, 'wb') as output_fp:
+            for key, value in vectorizer.vocabulary_.iteritems():
+                output_fp.write('%s : %d \n' % (key, value))
+
     logging.debug('The model found %d stopwords.' % len(vectorizer.stop_words_))
     finish_time = time.time()
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
