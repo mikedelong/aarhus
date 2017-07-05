@@ -4,6 +4,7 @@ import pickle
 import sys
 import time
 
+
 from nltk.corpus import stopwords
 from nltk.stem.snowball import SnowballStemmer
 from sklearn import metrics
@@ -79,7 +80,7 @@ def run():
 
     with open('roots-tfidf-settings.json') as data_file:
         data = json.load(data_file)
-        logging.debug(data)
+        logging.debug(json.dumps(data, sort_keys=True, indent=4, separators=(',', ': ')))
         limit = int(data['document_count_limit'])
         limit = sys.maxint if limit == -1 else limit
         input_pickle_file = data['input_pickle_file']
@@ -87,16 +88,19 @@ def run():
         max_df = float(data['max_df'])
         n_components = int(data['n_components'])
         n_features = int(data['n_features'])
+        ngram_range_min = int(data['ngram_range_min'])
+        ngram_range_max = int(data['ngram_range_max'])
         random_state = int(data['random_state'])
         terms_to_print = int(data['terms_to_print'])
         use_idf = bool(data['tfidf_use_idf'])
+        write_tfidf_vocabulary = data['write_tfidf_vocabulary']
 
     svd = TruncatedSVD(n_components, random_state=random_state)
     normalizer = Normalizer(copy=False)
     lsa = make_pipeline(svd, normalizer)
 
-    vectorizer = TfidfVectorizer(max_df=max_df, max_features=n_features, min_df=min_df, ngram_range=(1, 3),
-                                 stop_words='english', use_idf=use_idf)
+    vectorizer = TfidfVectorizer(max_df=max_df, max_features=n_features, min_df=min_df,
+                                 ngram_range=(ngram_range_min, ngram_range_max), stop_words='english', use_idf=use_idf)
 
     # todo  move this to a setting
     minibatch = True
@@ -152,9 +156,12 @@ def run():
     terms = vectorizer.get_feature_names()
     for jndex in range(true_k):
         logging.debug('Cluster %d: %d : %s' % (
-        jndex, km.counts_[jndex], [terms[index] for index in order_centroids[jndex, :terms_to_print]]))
+            jndex, km.counts_[jndex], [terms[index] for index in order_centroids[jndex, :terms_to_print]]))
 
     logging.debug('The vocabulary contains %d words.' % len(vectorizer.vocabulary_.keys()))
+    # todo move this to a setting
+    tfidf_vocabulary_file = './roots_tfidf_vocabulary_out.csv'
+    logging.debug('')
     logging.debug('The model found %d stopwords.' % len(vectorizer.stop_words_))
     finish_time = time.time()
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
