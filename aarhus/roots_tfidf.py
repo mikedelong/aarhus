@@ -89,15 +89,14 @@ def run():
         n_features = int(data['n_features'])
         random_state = int(data['random_state'])
         terms_to_print = int(data['terms_to_print'])
+        use_idf = bool(data['tfidf_use_idf'])
 
     svd = TruncatedSVD(n_components, random_state=random_state)
     normalizer = Normalizer(copy=False)
     lsa = make_pipeline(svd, normalizer)
 
-    # todo  move this to a setting
-    use_idf = True
-    vectorizer = TfidfVectorizer(max_df=max_df, max_features=n_features, min_df=min_df, stop_words='english',
-                                 use_idf=use_idf)
+    vectorizer = TfidfVectorizer(max_df=max_df, max_features=n_features, min_df=min_df, ngram_range=(1, 3),
+                                 stop_words='english', use_idf=use_idf)
 
     # todo  move this to a setting
     minibatch = True
