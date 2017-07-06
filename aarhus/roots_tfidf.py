@@ -147,12 +147,14 @@ def run():
     stopwords = vectorizer_english.stop_words_
     stopwords.update(['http', 'https', 'com', 'org', 'mailto', 'www', 'unsubscription', 'edu', 'email_blast_key',
                       'googlegroups', 'jsp', 'rs6', 'constantcontact', 'gmail', 'unsubscribe', '3d', 'google',
-                      'hangouts', 'link', 'safeunsubscribe', 'recipient', 'html', 'email', 'emails', 'iphone'])
+                      'hangouts', 'link', 'safeunsubscribe', 'recipient', 'html', 'email', 'emails', 'iphone',
+                      'subscribed', 'optout'])
     stopwords.update(['will', 'your', 'our', 'as', 'or', 'if', 'by', 'my', 'can', 'all', 'not', 'but', 'me',
                       'would', 'about', 'us', 'he', 'she', 'an', 'please', 'so', 'do', 'was', 'has', 'thanks',
                       'well', 'his', 've', 'what', 'who', 'just', 'know', 'call', 'sent', 'her', 'am', 'out',
                       'new', 'time', 'they', 'more', 'up', 'here', 'there', 'get', 'best', 'one', 're',
-                      'their', 'now', 'let', 'any', 'the', 'need', 'work'])
+                      'their', 'now', 'let', 'any', 'the', 'need', 'work', 'good', 'hope', 'should', 'thank',
+                      'how', 'have', 'been', 'no', 'could', 'also', 'make'])
     vectorizer_stopwords = TfidfVectorizer(max_df=max_df, max_features=n_features, min_df=min_df,
                                  ngram_range=(ngram_range_min, ngram_range_max),
                                            stop_words=stopwords, use_idf=use_idf)
