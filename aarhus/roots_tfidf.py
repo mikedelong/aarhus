@@ -190,6 +190,8 @@ def run():
             for key, value in vectorizer_stopwords.vocabulary_.iteritems():
                 output_fp.write('%s,%d \n' % (key, value))
 
+    # todo can we do something sensible with this?
+    logging.debug(km.labels_[0:20])
     finish_time = time.time()
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
     elapsed_minutes, elapsed_seconds = divmod(elapsed_remainder, 60)
