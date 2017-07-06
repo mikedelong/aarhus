@@ -165,7 +165,7 @@ def run():
         logging.debug('Writing tf-idf vocabulary to %s' % tfidf_vocabulary_file)
         with open(tfidf_vocabulary_file, 'wb') as output_fp:
             for key, value in vectorizer.vocabulary_.iteritems():
-                output_fp.write('%s : %d \n' % (key, value))
+                output_fp.write('%s,%d \n' % (key, value))
 
     logging.debug('The model found %d stopwords.' % len(vectorizer.stop_words_))
     finish_time = time.time()
