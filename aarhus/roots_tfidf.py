@@ -99,7 +99,7 @@ def run():
     normalizer = Normalizer(copy=False)
     lsa = make_pipeline(svd, normalizer)
 
-    vectorizer = TfidfVectorizer(max_df=max_df, max_features=n_features, min_df=min_df,
+    vectorizer_english = TfidfVectorizer(max_df=max_df, max_features=n_features, min_df=min_df,
                                  ngram_range=(ngram_range_min, ngram_range_max), stop_words='english', use_idf=use_idf)
 
     # todo  move this to a setting
@@ -138,8 +138,30 @@ def run():
                     pass
         count += 1
 
-    logging.debug('data extraction complete. About to start TFIDF.')
-    X = vectorizer.fit_transform(X)
+    logging.debug('data extraction complete. Running TFIDF.')
+    _ = vectorizer_english.fit_transform(X)
+    logging.debug('The vocabulary contains %d words.' % len(vectorizer_english.vocabulary_.keys()))
+    logging.debug('The model found %d stopwords.' % len(vectorizer_english.stop_words_))
+
+
+    stopwords = vectorizer_english.stop_words_
+    stopwords.update(['http', 'https', 'com', 'org', 'mailto', 'www', 'unsubscription', 'edu', 'email_blast_key',
+                      'googlegroups', 'jsp', 'rs6', 'constantcontact', 'gmail', 'unsubscribe', '3d', 'google',
+                      'hangouts', 'link', 'safeunsubscribe', 'recipient', 'html', 'email', 'emails', 'iphone'])
+    stopwords.update(['will', 'your', 'our', 'as', 'or', 'if', 'by', 'my', 'can', 'all', 'not', 'but', 'me',
+                      'would', 'about', 'us', 'he', 'she', 'an', 'please', 'so', 'do', 'was', 'has', 'thanks',
+                      'well', 'his', 've', 'what', 'who', 'just', 'know', 'call', 'sent', 'her', 'am', 'out',
+                      'new', 'time', 'they', 'more', 'up', 'here', 'there', 'get', 'best', 'one', 're',
+                      'their', 'now', 'let', 'any', 'the', 'need', 'work'])
+    vectorizer_stopwords = TfidfVectorizer(max_df=max_df, max_features=n_features, min_df=min_df,
+                                 ngram_range=(ngram_range_min, ngram_range_max),
+                                           stop_words=stopwords, use_idf=use_idf)
+    logging.debug('got the extended stopword list; rerunning TFIDF with the expanded list')
+    X = vectorizer_stopwords.fit_transform(X)
+    logging.debug('The vocabulary contains %d words.' % len(vectorizer_stopwords.vocabulary_.keys()))
+    logging.debug('The model found %d stopwords.' % len(vectorizer_stopwords.stop_words_))
+
+
     logging.debug('TFIDF complete. About to start LSA.')
 
     X = lsa.fit_transform(X)
@@ -153,21 +175,19 @@ def run():
     logging.debug("Top terms per cluster:")
     original_space_centroids = svd.inverse_transform(km.cluster_centers_)
     order_centroids = original_space_centroids.argsort()[:, ::-1]
-    terms = vectorizer.get_feature_names()
+    terms = vectorizer_stopwords.get_feature_names()
     for jndex in range(true_k):
         logging.debug('Cluster %d: %d : %s' % (
             jndex, km.counts_[jndex], [terms[index] for index in order_centroids[jndex, :terms_to_print]]))
 
-    logging.debug('The vocabulary contains %d words.' % len(vectorizer.vocabulary_.keys()))
     if write_tfidf_vocabulary:
         # todo move this to a setting
         tfidf_vocabulary_file = './roots_tfidf_vocabulary_out.csv'
         logging.debug('Writing tf-idf vocabulary to %s' % tfidf_vocabulary_file)
         with open(tfidf_vocabulary_file, 'wb') as output_fp:
-            for key, value in vectorizer.vocabulary_.iteritems():
+            for key, value in vectorizer_stopwords.vocabulary_.iteritems():
                 output_fp.write('%s,%d \n' % (key, value))
 
-    logging.debug('The model found %d stopwords.' % len(vectorizer.stop_words_))
     finish_time = time.time()
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
     elapsed_minutes, elapsed_seconds = divmod(elapsed_remainder, 60)
