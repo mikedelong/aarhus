@@ -92,6 +92,7 @@ def run():
         ngram_range_max = int(data['ngram_range_max'])
         random_state = int(data['random_state'])
         terms_to_print = int(data['terms_to_print'])
+        true_k = int(data['k_means_cluster_count'])
         use_idf = bool(data['tfidf_use_idf'])
         write_tfidf_vocabulary = data['write_tfidf_vocabulary']
 
@@ -104,8 +105,6 @@ def run():
 
     # todo  move this to a setting
     minibatch = True
-    # todo  move this to a setting
-    true_k = 100
     # todo  move this to a setting
     verbose = True
     if minibatch:
