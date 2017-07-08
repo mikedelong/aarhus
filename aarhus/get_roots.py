@@ -81,17 +81,6 @@ def run():
         document_count_limit = data['document_count_limit']
         if document_count_limit == -1:
             document_count_limit = sys.maxint
-        process_text_part = data['process_text_part']
-        process_html_part = data['process_html_part']
-        process_both_empty = data['process_both_empty']
-        text_input_folder = data['text_input_folder']
-        random_state = data['random_state']
-        max_df = data['max_df']
-        min_df = data['min_df']
-        max_features = data['max_features']
-        if max_features == -1:
-            max_features = None
-        n_components = data['n_components']
         reference_of_interest = data['reference']
         # our internal keys are always lowercase, so we want to be sure
         # to use a lowercase reference for comparisons
