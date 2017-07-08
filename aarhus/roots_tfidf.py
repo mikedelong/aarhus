@@ -84,8 +84,9 @@ def run():
         limit = int(data['document_count_limit'])
         limit = sys.maxint if limit == -1 else limit
         input_pickle_file = data['input_pickle_file']
-        min_df = float(data['min_df'])
+        minibatch = bool(data['k_means_minibatch'])
         max_df = float(data['max_df'])
+        min_df = float(data['min_df'])
         n_components = int(data['n_components'])
         n_features = int(data['n_features'])
         ngram_range_min = int(data['ngram_range_min'])
@@ -103,8 +104,6 @@ def run():
     vectorizer_english = TfidfVectorizer(max_df=max_df, max_features=n_features, min_df=min_df,
                                  ngram_range=(ngram_range_min, ngram_range_max), stop_words='english', use_idf=use_idf)
 
-    # todo  move this to a setting
-    minibatch = True
     # todo  move this to a setting
     verbose = True
     if minibatch:
