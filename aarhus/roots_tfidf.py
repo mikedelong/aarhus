@@ -1,9 +1,9 @@
+import collections
 import json
 import logging
 import pickle
 import sys
 import time
-
 
 from nltk.corpus import stopwords
 from nltk.stem.snowball import SnowballStemmer
@@ -102,7 +102,8 @@ def run():
     lsa = make_pipeline(svd, normalizer)
 
     vectorizer_english = TfidfVectorizer(max_df=max_df, max_features=n_features, min_df=min_df,
-                                 ngram_range=(ngram_range_min, ngram_range_max), stop_words='english', use_idf=use_idf)
+                                         ngram_range=(ngram_range_min, ngram_range_max), stop_words='english',
+                                         use_idf=use_idf)
 
     # todo  move this to a setting
     verbose = True
@@ -155,13 +156,12 @@ def run():
                       'their', 'now', 'let', 'any', 'the', 'need', 'work', 'good', 'hope', 'should', 'thank',
                       'how', 'have', 'been', 'no', 'could', 'also', 'make', 'its', 'some', 'may', 'think', 'when'])
     vectorizer_stopwords = TfidfVectorizer(max_df=max_df, max_features=n_features, min_df=min_df,
-                                 ngram_range=(ngram_range_min, ngram_range_max),
+                                           ngram_range=(ngram_range_min, ngram_range_max),
                                            stop_words=stopwords, use_idf=use_idf)
     logging.debug('got the extended stopword list; rerunning TFIDF with the expanded list')
     X = vectorizer_stopwords.fit_transform(X)
     logging.debug('The vocabulary contains %d words.' % len(vectorizer_stopwords.vocabulary_.keys()))
     logging.debug('The model found %d stopwords.' % len(vectorizer_stopwords.stop_words_))
-
 
     logging.debug('TFIDF complete. About to start LSA.')
 
@@ -192,10 +192,9 @@ def run():
     # todo can we do something sensible with this?
     logging.debug(km.labels_[0:20])
     logging.debug('lengths of labels: %d, documents processed: %d' % (len(km.labels_), len(documents_processed)))
-    for item in zip(km.labels_, documents_processed):
-        # todo have this pick out the largest cluster
-        if item[0] == 26:
-            logging.debug(item[1])
+    largest_cluster = collections.Counter(km.labels_).most_common(1)[0][0]
+    logging.debug('largest cluseter: %s' % [item[1] for item in zip(km.labels_, documents_processed) if
+                                            item[0] == largest_cluster])
 
     finish_time = time.time()
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
