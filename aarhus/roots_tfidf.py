@@ -120,6 +120,7 @@ def run():
     logging.debug('we have %d messages.' % len(roots))
     count = 0
     X = list()
+    documents_processed = list()
     for key in roots.keys():
         value = roots[key]
         if count < limit:
@@ -131,6 +132,7 @@ def run():
                     try:
                         decoded = body.decode('utf-8', 'ignore')
                         X.append(decoded)
+                        documents_processed.append(key)
                     except UnicodeDecodeError as unicodeDecodeError:
                         logging.warn(unicodeDecodeError)
                     pass
@@ -140,7 +142,6 @@ def run():
     _ = vectorizer_english.fit_transform(X)
     logging.debug('The vocabulary contains %d words.' % len(vectorizer_english.vocabulary_.keys()))
     logging.debug('The model found %d stopwords.' % len(vectorizer_english.stop_words_))
-
 
     stopwords = vectorizer_english.stop_words_
     stopwords.update(['http', 'https', 'com', 'org', 'mailto', 'www', 'unsubscription', 'edu', 'email_blast_key',
@@ -152,7 +153,7 @@ def run():
                       'well', 'his', 've', 'what', 'who', 'just', 'know', 'call', 'sent', 'her', 'am', 'out',
                       'new', 'time', 'they', 'more', 'up', 'here', 'there', 'get', 'best', 'one', 're',
                       'their', 'now', 'let', 'any', 'the', 'need', 'work', 'good', 'hope', 'should', 'thank',
-                      'how', 'have', 'been', 'no', 'could', 'also', 'make'])
+                      'how', 'have', 'been', 'no', 'could', 'also', 'make', 'its', 'some', 'may', 'think', 'when'])
     vectorizer_stopwords = TfidfVectorizer(max_df=max_df, max_features=n_features, min_df=min_df,
                                  ngram_range=(ngram_range_min, ngram_range_max),
                                            stop_words=stopwords, use_idf=use_idf)
@@ -190,6 +191,12 @@ def run():
 
     # todo can we do something sensible with this?
     logging.debug(km.labels_[0:20])
+    logging.debug('lengths of labels: %d, documents processed: %d' % (len(km.labels_), len(documents_processed)))
+    for item in zip(km.labels_, documents_processed):
+        # todo have this pick out the largest cluster
+        if item[0] == 26:
+            logging.debug(item[1])
+
     finish_time = time.time()
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
     elapsed_minutes, elapsed_seconds = divmod(elapsed_remainder, 60)
