@@ -35,14 +35,10 @@ def process_folder(arg_folder, arg_reference, arg_in_or_out, arg_document_count_
                     no_references_count += 1
                 document_count += 1
                 if 'message-id' in references.keys():
-                    # if references.has_key('message-id'):
                     message_id_count += 1
-
                 if arg_reference in references.keys() and arg_in_or_out:
-                    # result.append(current)
                     result[current] = message
                 elif arg_reference not in references.keys() and not arg_in_or_out:
-                    # result.append(current)
                     result[current] = message
 
     logging.info('documents : %d message-id: %d references: %d no references: %d' % (
@@ -87,7 +83,7 @@ def run():
         reference_of_interest = reference_of_interest.lower()
         in_or_out = data['reference_in']
         in_or_out = bool(in_or_out)
-        pickle_file = data['pickle_file']
+        pickle_file = data['output_pickle_file']
 
     documents_of_interest = process_folder(input_folder, reference_of_interest, in_or_out, document_count_limit)
     logging.info(
@@ -96,7 +92,6 @@ def run():
     with open(pickle_file, 'wb') as output_fp:
         pickle.dump(documents_of_interest, output_fp)
     logging.info('wrote pickled dictionary to %s.' % pickle_file)
-    # todo write a reader/processor for the pickle file
 
     finish_time = time.time()
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
