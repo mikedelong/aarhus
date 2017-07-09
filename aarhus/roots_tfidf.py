@@ -189,12 +189,10 @@ def run():
             for key, value in vectorizer_stopwords.vocabulary_.iteritems():
                 output_fp.write('%s,%d \n' % (key, value))
 
-    # todo can we do something sensible with this?
-    logging.debug(km.labels_[0:20])
     logging.debug('lengths of labels: %d, documents processed: %d' % (len(km.labels_), len(documents_processed)))
     largest_cluster = collections.Counter(km.labels_).most_common(1)[0][0]
-    logging.debug('largest cluseter: %s' % [item[1] for item in zip(km.labels_, documents_processed) if
-                                            item[0] == largest_cluster])
+    logging.debug('largest cluster: %s' % sorted([int(item[1]) for item in zip(km.labels_, documents_processed) if
+                                            item[0] == largest_cluster]))
 
     finish_time = time.time()
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
