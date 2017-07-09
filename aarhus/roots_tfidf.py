@@ -190,9 +190,10 @@ def run():
                 output_fp.write('%s,%d \n' % (key, value))
 
     logging.debug('lengths of labels: %d, documents processed: %d' % (len(km.labels_), len(documents_processed)))
-    largest_cluster = collections.Counter(km.labels_).most_common(1)[0][0]
-    logging.debug('largest cluster: %s' % sorted([int(item[1]) for item in zip(km.labels_, documents_processed) if
-                                            item[0] == largest_cluster]))
+    largest_cluster_number = collections.Counter(km.labels_).most_common(1)[0][0]
+    largest_cluster = sorted([int(item[1]) for item in zip(km.labels_, documents_processed) if
+                                            item[0] == largest_cluster_number])
+    logging.debug('largest cluster: %d (%d) : %s' % (largest_cluster_number, len(largest_cluster), largest_cluster))
 
     finish_time = time.time()
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
