@@ -106,19 +106,19 @@ def run():
                                          use_idf=use_idf)
 
     # todo  move this to a setting
-    verbose = True
+    kmeans_verbose = True
     if minibatch:
         km = MiniBatchKMeans(batch_size=1000, init='k-means++', init_size=1000, n_clusters=true_k, n_init=1,
-                             random_state=random_state, verbose=verbose)
+                             random_state=random_state, verbose=kmeans_verbose)
     else:
         km = KMeans(init='k-means++', max_iter=100, n_clusters=true_k, n_init=1, random_state=random_state,
-                    verbose=verbose)
+                    verbose=kmeans_verbose)
 
     with open(input_pickle_file, 'rb') as input_fp:
         roots = pickle.load(input_fp)
 
     # http://scikit-learn.org/stable/auto_examples/text/document_clustering.html
-    logging.debug('we have %d messages.' % len(roots))
+    logging.debug('After pickle load we have %d messages.' % len(roots))
     count = 0
     X = list()
     documents_processed = list()
@@ -139,12 +139,15 @@ def run():
                     pass
         count += 1
 
+    logging.debug('After ignoring documents with unicode decode errors we have %d messages.' % len(X))
+
     logging.debug('data extraction complete. Running TFIDF.')
     _ = vectorizer_english.fit_transform(X)
     logging.debug('The vocabulary contains %d words.' % len(vectorizer_english.vocabulary_.keys()))
     logging.debug('The model found %d stopwords.' % len(vectorizer_english.stop_words_))
 
     stopwords = vectorizer_english.stop_words_
+    # todo move these to a data file
     stopwords.update(['http', 'https', 'com', 'org', 'mailto', 'www', 'unsubscription', 'edu', 'email_blast_key',
                       'googlegroups', 'jsp', 'rs6', 'constantcontact', 'gmail', 'unsubscribe', '3d', 'google',
                       'hangouts', 'link', 'safeunsubscribe', 'recipient', 'html', 'email', 'emails', 'iphone',
