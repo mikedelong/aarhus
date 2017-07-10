@@ -105,7 +105,7 @@ def run():
                                          ngram_range=(ngram_range_min, ngram_range_max), stop_words='english',
                                          use_idf=use_idf)
 
-    # todo  move this to a setting
+    # todo move this to a setting
     kmeans_verbose = True
     if minibatch:
         km = MiniBatchKMeans(batch_size=1000, init='k-means++', init_size=1000, n_clusters=true_k, n_init=1,
@@ -140,6 +140,8 @@ def run():
         count += 1
 
     logging.debug('After ignoring documents with unicode decode errors we have %d messages.' % len(X))
+    loss_percent = (100 * (min(limit, len(roots)) - len(X))/min(limit, len(roots)))
+    logging.debug('We lost %d percent due to unicode errors' % loss_percent)
 
     logging.debug('data extraction complete. Running TFIDF.')
     _ = vectorizer_english.fit_transform(X)
