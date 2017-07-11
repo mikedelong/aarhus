@@ -5,17 +5,16 @@ import pickle
 import sys
 import time
 
+from matplotlib import pyplot as pyplot
 from nltk.corpus import stopwords
 from nltk.stem.snowball import SnowballStemmer
 from sklearn import metrics
 from sklearn.cluster import KMeans, MiniBatchKMeans
 from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.manifold import TSNE
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import Normalizer
-
-from matplotlib import pyplot as pyplot
-from sklearn.manifold import TSNE
 
 # http://mypy.pythonblogs.com/12_mypy/archive/1253_workaround_for_python_bug_ascii_codec_cant_encode_character_uxa0_in_position_111_ordinal_not_in_range128.html
 reload(sys)
