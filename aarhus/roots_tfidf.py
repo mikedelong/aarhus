@@ -14,6 +14,9 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import Normalizer
 
+from matplotlib import pyplot as pyplot
+from sklearn.manifold import TSNE
+
 # http://mypy.pythonblogs.com/12_mypy/archive/1253_workaround_for_python_bug_ascii_codec_cant_encode_character_uxa0_in_position_111_ordinal_not_in_range128.html
 reload(sys)
 sys.setdefaultencoding("utf8")
@@ -177,6 +180,7 @@ def run():
 
     logging.debug("Clustering sparse data with %s" % km)
     km.fit(X)
+
     logging.debug("Silhouette Coefficient: %0.3f" % metrics.silhouette_score(X, km.labels_, sample_size=1000))
     logging.debug("Top terms per cluster:")
     original_space_centroids = svd.inverse_transform(km.cluster_centers_)
@@ -200,6 +204,12 @@ def run():
                                             item[0] == largest_cluster_number])
     logging.debug('largest cluster: %d (%d) : %s' % (largest_cluster_number, len(largest_cluster), largest_cluster))
 
+    # use t-SNE to visualize
+    model_tsne = TSNE(n_components=2, random_state=random_state)
+    points_tsne = model_tsne.fit_transform(X)
+    pyplot.figure()
+    pyplot.scatter([each[0] for each in points_tsne], [each[1] for each in points_tsne])
+    pyplot.show()
     finish_time = time.time()
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
     elapsed_minutes, elapsed_seconds = divmod(elapsed_remainder, 60)
