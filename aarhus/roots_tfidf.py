@@ -143,7 +143,7 @@ def run():
         count += 1
 
     logging.debug('After ignoring documents with unicode decode errors we have %d messages.' % len(X))
-    loss_percent = (100 * (min(limit, len(roots)) - len(X))/min(limit, len(roots)))
+    loss_percent = (100 * (min(limit, len(roots)) - len(X)) / min(limit, len(roots)))
     logging.debug('We lost %d percent due to unicode errors' % loss_percent)
 
     logging.debug('data extraction complete. Running TFIDF.')
@@ -201,7 +201,7 @@ def run():
     logging.debug('lengths of labels: %d, documents processed: %d' % (len(km.labels_), len(documents_processed)))
     largest_cluster_number = collections.Counter(km.labels_).most_common(1)[0][0]
     largest_cluster = sorted([int(item[1]) for item in zip(km.labels_, documents_processed) if
-                                            item[0] == largest_cluster_number])
+                              item[0] == largest_cluster_number])
     logging.debug('largest cluster: %d (%d) : %s' % (largest_cluster_number, len(largest_cluster), largest_cluster))
 
     # use t-SNE to visualize
