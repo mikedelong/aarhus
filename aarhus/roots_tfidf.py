@@ -5,6 +5,7 @@ import pickle
 import sys
 import time
 
+import numpy
 from matplotlib import pyplot as pyplot
 from nltk.corpus import stopwords
 from nltk.stem.snowball import SnowballStemmer
@@ -209,8 +210,10 @@ def run():
     model_tsne = TSNE(n_components=2, random_state=random_state)
     points_tsne = model_tsne.fit_transform(X)
     pyplot.figure()
-    pyplot.scatter([each[0] for each in points_tsne], [each[1] for each in points_tsne])
+    pyplot.scatter([each[0] for each in points_tsne], [each[1] for each in points_tsne],
+                   c=km.labels_.astype(numpy.float), marker='x')
     pyplot.show()
+
     finish_time = time.time()
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
     elapsed_minutes, elapsed_seconds = divmod(elapsed_remainder, 60)
