@@ -86,6 +86,7 @@ def run():
         limit = int(data['document_count_limit'])
         limit = sys.maxint if limit == -1 else limit
         input_pickle_file = data['input_pickle_file']
+        kmeans_verbose = bool(data['k_means_verbose'])
         minibatch = bool(data['k_means_minibatch'])
         max_df = float(data['max_df'])
         min_df = float(data['min_df'])
@@ -107,8 +108,6 @@ def run():
                                          ngram_range=(ngram_range_min, ngram_range_max), stop_words='english',
                                          use_idf=use_idf)
 
-    # todo move this to a setting
-    kmeans_verbose = True
     if minibatch:
         km = MiniBatchKMeans(batch_size=1000, init='k-means++', init_size=1000, n_clusters=true_k, n_init=1,
                              random_state=random_state, verbose=kmeans_verbose)
@@ -142,8 +141,11 @@ def run():
         count += 1
 
     logging.debug('After ignoring documents with unicode decode errors we have %d messages.' % len(X))
-    loss_percent = (100 * (min(limit, len(roots)) - len(X)) / min(limit, len(roots)))
-    logging.debug('We lost %d percent due to unicode errors' % loss_percent)
+    original_size = (min(limit, len(roots)))
+    actual_size = len(X)
+    loss_percent = (100 * (original_size - actual_size) / original_size)
+    logging.debug('We lost %d percent due to unicode errors: %d of %d' % (loss_percent, (original_size - actual_size),
+                                                                          original_size))
 
     logging.debug('data extraction complete. Running TFIDF.')
     _ = vectorizer_english.fit_transform(X)
