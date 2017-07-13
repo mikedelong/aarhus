@@ -210,7 +210,8 @@ def run():
     # use t-SNE to visualize
     model_tsne = TSNE(n_components=2, random_state=random_state)
     points_tsne = model_tsne.fit_transform(X)
-    pyplot.figure()
+    figsize = (16, 9)
+    pyplot.figure(figsize=figsize)
     pyplot.scatter([each[0] for each in points_tsne], [each[1] for each in points_tsne],
                    c=km.labels_.astype(numpy.float), marker='x')
     # todo add a legend that will show which cluster we're in?
