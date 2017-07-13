@@ -155,17 +155,20 @@ def run():
     logging.debug('The model found %d stopwords.' % len(vectorizer_english.stop_words_))
 
     stopwords = vectorizer_english.stop_words_
+    additional_stopwords = set()
     with open(stopword_file, 'rb') as stopwords_fp:
         for item in iter(stopwords_fp):
-            stopwords.add(unicode(item.strip()))
-            logging.debug(item.strip())
+            additional_stopwords.add(unicode(item.strip()))
+    logging.debug('Additional stopwords (%d): %s' % (len(additional_stopwords), list(additional_stopwords)))
+    stopwords.update(additional_stopwords)
     # todo move these to a data file
     stopwords.update(['will', 'your', 'our', 'as', 'or', 'if', 'by', 'my', 'can', 'all', 'not', 'but', 'me',
                       'would', 'about', 'us', 'he', 'she', 'an', 'please', 'so', 'do', 'was', 'has', 'thanks',
                       'well', 'his', 've', 'what', 'who', 'just', 'know', 'call', 'sent', 'her', 'am', 'out',
                       'new', 'time', 'they', 'more', 'up', 'here', 'there', 'get', 'best', 'one', 're',
                       'their', 'now', 'let', 'any', 'the', 'need', 'work', 'good', 'hope', 'should', 'thank',
-                      'how', 'have', 'been', 'no', 'could', 'also', 'make', 'its', 'some', 'may', 'think', 'when'])
+                      'how', 'have', 'been', 'no', 'could', 'also', 'make', 'its', 'some', 'may', 'think', 'when',
+                      'said', 'today', 'like', 'going'])
     vectorizer_stopwords = TfidfVectorizer(max_df=max_df, max_features=n_features, min_df=min_df,
                                            ngram_range=(ngram_range_min, ngram_range_max),
                                            stop_words=stopwords, use_idf=use_idf)
@@ -217,12 +220,12 @@ def run():
     # todo add a legend that will show which cluster we're in?
     # todo add a tooltip that will show the topic on hover
     # pyplot.legend()
-    pyplot.show()
 
     finish_time = time.time()
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
     elapsed_minutes, elapsed_seconds = divmod(elapsed_remainder, 60)
     logging.info("Time: {:0>2}:{:0>2}:{:05.2f}".format(int(elapsed_hours), int(elapsed_minutes), elapsed_seconds))
+    pyplot.show()
 
 
 if __name__ == '__main__':
