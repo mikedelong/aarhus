@@ -96,6 +96,7 @@ def run():
         ngram_range_min = int(data['ngram_range_min'])
         ngram_range_max = int(data['ngram_range_max'])
         random_state = int(data['random_state'])
+        stopword_file = data['stopword_file']
         terms_to_print = int(data['terms_to_print'])
         true_k = int(data['k_means_cluster_count'])
         use_idf = bool(data['tfidf_use_idf'])
@@ -154,11 +155,11 @@ def run():
     logging.debug('The model found %d stopwords.' % len(vectorizer_english.stop_words_))
 
     stopwords = vectorizer_english.stop_words_
+    with open(stopword_file, 'rb') as stopwords_fp:
+        for item in iter(stopwords_fp):
+            stopwords.add(unicode(item.strip()))
+            logging.debug(item.strip())
     # todo move these to a data file
-    stopwords.update(['http', 'https', 'com', 'org', 'mailto', 'www', 'unsubscription', 'edu', 'email_blast_key',
-                      'googlegroups', 'jsp', 'rs6', 'constantcontact', 'gmail', 'unsubscribe', '3d', 'google',
-                      'hangouts', 'link', 'safeunsubscribe', 'recipient', 'html', 'email', 'emails', 'iphone',
-                      'subscribed', 'optout'])
     stopwords.update(['will', 'your', 'our', 'as', 'or', 'if', 'by', 'my', 'can', 'all', 'not', 'but', 'me',
                       'would', 'about', 'us', 'he', 'she', 'an', 'please', 'so', 'do', 'was', 'has', 'thanks',
                       'well', 'his', 've', 'what', 'who', 'just', 'know', 'call', 'sent', 'her', 'am', 'out',
