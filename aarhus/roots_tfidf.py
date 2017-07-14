@@ -17,6 +17,9 @@ from sklearn.manifold import TSNE
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import Normalizer
 
+from matplotlib import colorbar
+from matplotlib import cm
+
 # http://mypy.pythonblogs.com/12_mypy/archive/1253_workaround_for_python_bug_ascii_codec_cant_encode_character_uxa0_in_position_111_ordinal_not_in_range128.html
 reload(sys)
 sys.setdefaultencoding("utf8")
@@ -214,12 +217,12 @@ def run():
     points_tsne = model_tsne.fit_transform(X)
     figsize = (16, 9)
     pyplot.figure(figsize=figsize)
-    cax = pyplot.scatter([each[0] for each in points_tsne], [each[1] for each in points_tsne],
-                   c=km.labels_.astype(numpy.float), cmap='plasma', marker='x')
-    # todo add a legend that will show which cluster we're in?
+    color_map = 'plasma'
+    pyplot.scatter([each[0] for each in points_tsne], [each[1] for each in points_tsne],
+                   c=km.labels_.astype(numpy.float), cmap=color_map, marker='x')
     pyplot.colorbar(ticks=[range(0, true_k)])
+
     # todo add a tooltip that will show the topic on hover
-    # pyplot.legend()
 
     finish_time = time.time()
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
