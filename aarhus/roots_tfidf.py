@@ -98,6 +98,7 @@ def run():
         random_state = int(data['random_state'])
         stopword_file = data['stopword_file']
         terms_to_print = int(data['terms_to_print'])
+        tfidf_vocabulary_file = data['tfidf_vocabulary_file']
         true_k = int(data['k_means_cluster_count'])
         use_idf = bool(data['tfidf_use_idf'])
         write_tfidf_vocabulary = data['write_tfidf_vocabulary']
@@ -197,8 +198,6 @@ def run():
             jndex, km.counts_[jndex], [terms[index] for index in order_centroids[jndex, :terms_to_print]]))
 
     if write_tfidf_vocabulary:
-        # todo move this to a setting
-        tfidf_vocabulary_file = './roots_tfidf_vocabulary_out.csv'
         logging.debug('Writing tf-idf vocabulary to %s' % tfidf_vocabulary_file)
         with open(tfidf_vocabulary_file, 'wb') as output_fp:
             for key, value in vectorizer_stopwords.vocabulary_.iteritems():
