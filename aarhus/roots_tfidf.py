@@ -17,6 +17,8 @@ from sklearn.manifold import TSNE
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import Normalizer
 
+from matplotlib import cm
+
 # http://mypy.pythonblogs.com/12_mypy/archive/1253_workaround_for_python_bug_ascii_codec_cant_encode_character_uxa0_in_position_111_ordinal_not_in_range128.html
 reload(sys)
 sys.setdefaultencoding("utf8")
@@ -215,7 +217,7 @@ def run():
     figsize = (16, 9)
     pyplot.figure(figsize=figsize)
     pyplot.scatter([each[0] for each in points_tsne], [each[1] for each in points_tsne],
-                   c=km.labels_.astype(numpy.float), marker='x')
+                   c=km.labels_.astype(numpy.float), cmap='plasma', marker='x')
     # todo add a legend that will show which cluster we're in?
     # todo add a tooltip that will show the topic on hover
     # pyplot.legend()
