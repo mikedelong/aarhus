@@ -214,9 +214,10 @@ def run():
     points_tsne = model_tsne.fit_transform(X)
     figsize = (16, 9)
     pyplot.figure(figsize=figsize)
-    pyplot.scatter([each[0] for each in points_tsne], [each[1] for each in points_tsne],
+    cax = pyplot.scatter([each[0] for each in points_tsne], [each[1] for each in points_tsne],
                    c=km.labels_.astype(numpy.float), cmap='plasma', marker='x')
     # todo add a legend that will show which cluster we're in?
+    pyplot.colorbar(ticks=[range(0, true_k)])
     # todo add a tooltip that will show the topic on hover
     # pyplot.legend()
 
