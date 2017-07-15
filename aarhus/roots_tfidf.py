@@ -163,13 +163,15 @@ def run():
     logging.debug('Additional stopwords (%d): %s' % (len(additional_stopwords), sorted(list(additional_stopwords))))
     stopwords.update(additional_stopwords)
     # todo move these to a data file
-    stopwords.update(['will', 'your', 'our', 'as', 'or', 'if', 'by', 'my', 'can', 'all', 'not', 'but', 'me',
-                      'would', 'about', 'us', 'he', 'she', 'an', 'please', 'so', 'do', 'was', 'has', 'thanks',
-                      'well', 'his', 've', 'what', 'who', 'just', 'know', 'call', 'sent', 'her', 'am', 'out',
-                      'new', 'time', 'they', 'more', 'up', 'here', 'there', 'get', 'best', 'one', 're',
-                      'their', 'now', 'let', 'any', 'the', 'need', 'work', 'good', 'hope', 'should', 'thank',
-                      'how', 'have', 'been', 'no', 'could', 'also', 'make', 'its', 'some', 'may', 'think', 'when',
-                      'said', 'today', 'like', 'going', 'him'])
+    basic_stopwords = sorted(
+        ['will', 'your', 'our', 'as', 'or', 'if', 'by', 'my', 'can', 'all', 'not', 'but', 'me', 'would', 'about',
+         'us', 'he', 'she', 'an', 'please', 'so', 'do', 'was', 'has', 'thanks', 'well', 'his', 've', 'what', 'who',
+         'just', 'know', 'call', 'sent', 'her', 'am', 'out', 'new', 'time', 'they', 'more', 'up', 'here', 'there',
+         'get', 'best', 'one', 're', 'their', 'now', 'let', 'any', 'the', 'need', 'work', 'good', 'hope', 'should',
+         'thank', 'how', 'have', 'been', 'no', 'could', 'also', 'make', 'its', 'some', 'may', 'think', 'when',
+         'said', 'today', 'like', 'going', 'him'])
+    logging.debug('basic stopwords: %s' % basic_stopwords)
+    stopwords.update(basic_stopwords)
     vectorizer_stopwords = TfidfVectorizer(max_df=max_df, max_features=n_features, min_df=min_df,
                                            ngram_range=(ngram_range_min, ngram_range_max), stop_words=stopwords,
                                            use_idf=use_idf)
@@ -214,7 +216,7 @@ def run():
     points_tsne = model_tsne.fit_transform(X)
     figsize = (16, 9)
     pyplot.figure(figsize=figsize)
-    color_map = 'Set1' # 'plasma'
+    color_map = 'Set1'  # 'plasma'
     pyplot.scatter([each[0] for each in points_tsne], [each[1] for each in points_tsne],
                    c=km.labels_.astype(numpy.float), cmap=color_map, marker='x')
     pyplot.colorbar(ticks=[range(0, true_k)])
