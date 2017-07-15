@@ -17,9 +17,6 @@ from sklearn.manifold import TSNE
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import Normalizer
 
-from matplotlib import colorbar
-from matplotlib import cm
-
 # http://mypy.pythonblogs.com/12_mypy/archive/1253_workaround_for_python_bug_ascii_codec_cant_encode_character_uxa0_in_position_111_ordinal_not_in_range128.html
 reload(sys)
 sys.setdefaultencoding("utf8")
@@ -163,7 +160,7 @@ def run():
     with open(stopword_file, 'rb') as stopwords_fp:
         for item in iter(stopwords_fp):
             additional_stopwords.add(unicode(item.strip()))
-    logging.debug('Additional stopwords (%d): %s' % (len(additional_stopwords), list(additional_stopwords)))
+    logging.debug('Additional stopwords (%d): %s' % (len(additional_stopwords), sorted(list(additional_stopwords))))
     stopwords.update(additional_stopwords)
     # todo move these to a data file
     stopwords.update(['will', 'your', 'our', 'as', 'or', 'if', 'by', 'my', 'can', 'all', 'not', 'but', 'me',
@@ -172,10 +169,10 @@ def run():
                       'new', 'time', 'they', 'more', 'up', 'here', 'there', 'get', 'best', 'one', 're',
                       'their', 'now', 'let', 'any', 'the', 'need', 'work', 'good', 'hope', 'should', 'thank',
                       'how', 'have', 'been', 'no', 'could', 'also', 'make', 'its', 'some', 'may', 'think', 'when',
-                      'said', 'today', 'like', 'going'])
+                      'said', 'today', 'like', 'going', 'him'])
     vectorizer_stopwords = TfidfVectorizer(max_df=max_df, max_features=n_features, min_df=min_df,
-                                           ngram_range=(ngram_range_min, ngram_range_max),
-                                           stop_words=stopwords, use_idf=use_idf)
+                                           ngram_range=(ngram_range_min, ngram_range_max), stop_words=stopwords,
+                                           use_idf=use_idf)
     logging.debug('got the extended stopword list; rerunning TFIDF with the expanded list')
     X = vectorizer_stopwords.fit_transform(X)
     logging.debug('The vocabulary contains %d words.' % len(vectorizer_stopwords.vocabulary_.keys()))
@@ -217,10 +214,11 @@ def run():
     points_tsne = model_tsne.fit_transform(X)
     figsize = (16, 9)
     pyplot.figure(figsize=figsize)
-    color_map = 'plasma'
+    color_map = 'Set1' # 'plasma'
     pyplot.scatter([each[0] for each in points_tsne], [each[1] for each in points_tsne],
                    c=km.labels_.astype(numpy.float), cmap=color_map, marker='x')
     pyplot.colorbar(ticks=[range(0, true_k)])
+    pyplot.tight_layout()
 
     # todo add a tooltip that will show the topic on hover
 
