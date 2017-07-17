@@ -7,8 +7,6 @@ import time
 
 import numpy
 from matplotlib import pyplot as pyplot
-# from nltk.corpus import stopwords
-from nltk.stem.snowball import SnowballStemmer
 from sklearn import metrics
 from sklearn.cluster import KMeans, MiniBatchKMeans
 from sklearn.decomposition import TruncatedSVD
@@ -23,9 +21,6 @@ reload(sys)
 sys.setdefaultencoding("utf8")
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s :: %(message)s', level=logging.DEBUG)
-
-stemmer = SnowballStemmer('english')
-# stopwords = stopwords.words('english')
 
 
 def get_character_sets(arg_message):
@@ -119,7 +114,7 @@ def run():
         km = KMeans(init='k-means++', max_iter=100, n_clusters=true_k, n_init=1, random_state=random_state,
                     verbose=kmeans_verbose)
 
-    tf_vectorizer = CountVectorizer(max_df=0.95,max_features=n_features,min_df=2,stop_words='english')
+    tf_vectorizer = CountVectorizer(max_df=0.95, max_features=n_features, min_df=2, stop_words='english')
 
     # tf = tf_vectorizer.fit_transform(data_samples)
 
