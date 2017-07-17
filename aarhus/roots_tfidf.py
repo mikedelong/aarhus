@@ -7,11 +7,12 @@ import time
 
 import numpy
 from matplotlib import pyplot as pyplot
-from nltk.corpus import stopwords
+# from nltk.corpus import stopwords
 from nltk.stem.snowball import SnowballStemmer
 from sklearn import metrics
 from sklearn.cluster import KMeans, MiniBatchKMeans
 from sklearn.decomposition import TruncatedSVD
+from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.manifold import TSNE
 from sklearn.pipeline import make_pipeline
@@ -24,7 +25,7 @@ sys.setdefaultencoding("utf8")
 logging.basicConfig(format='%(asctime)s : %(levelname)s :: %(message)s', level=logging.DEBUG)
 
 stemmer = SnowballStemmer('english')
-stopwords = stopwords.words('english')
+# stopwords = stopwords.words('english')
 
 
 def get_character_sets(arg_message):
@@ -118,13 +119,17 @@ def run():
         km = KMeans(init='k-means++', max_iter=100, n_clusters=true_k, n_init=1, random_state=random_state,
                     verbose=kmeans_verbose)
 
+    tf_vectorizer = CountVectorizer(max_df=0.95,max_features=n_features,min_df=2,stop_words='english')
+
+    # tf = tf_vectorizer.fit_transform(data_samples)
+
     with open(input_pickle_file, 'rb') as input_fp:
         roots = pickle.load(input_fp)
 
     # http://scikit-learn.org/stable/auto_examples/text/document_clustering.html
     logging.debug('After pickle load we have %d messages.' % len(roots))
     count = 0
-    X = list()
+    text_data = list()
     documents_processed = list()
     for key in roots.keys():
         value = roots[key]
@@ -136,22 +141,22 @@ def run():
                 else:
                     try:
                         decoded = body.decode('utf-8', 'ignore')
-                        X.append(decoded)
+                        text_data.append(decoded)
                         documents_processed.append(key)
                     except UnicodeDecodeError as unicodeDecodeError:
                         logging.warn(unicodeDecodeError)
                     pass
         count += 1
 
-    logging.debug('After ignoring documents with unicode decode errors we have %d messages.' % len(X))
+    actual_size = len(text_data)
+    logging.debug('After ignoring documents with unicode decode errors we have %d messages.' % actual_size)
     original_size = (min(limit, len(roots)))
-    actual_size = len(X)
     loss_percent = (100 * (original_size - actual_size) / original_size)
     logging.debug('We lost %d percent due to unicode errors: %d of %d' % (loss_percent, (original_size - actual_size),
                                                                           original_size))
 
     logging.debug('data extraction complete. Running TFIDF.')
-    _ = vectorizer_english.fit_transform(X)
+    _ = vectorizer_english.fit_transform(text_data)
     logging.debug('The vocabulary contains %d words.' % len(vectorizer_english.vocabulary_.keys()))
     logging.debug('The model found %d stopwords.' % len(vectorizer_english.stop_words_))
 
@@ -176,21 +181,21 @@ def run():
                                            ngram_range=(ngram_range_min, ngram_range_max), stop_words=stopwords,
                                            use_idf=use_idf)
     logging.debug('got the extended stopword list; rerunning TFIDF with the expanded list')
-    X = vectorizer_stopwords.fit_transform(X)
+    tfidf_data = vectorizer_stopwords.fit_transform(text_data)
     logging.debug('The vocabulary contains %d words.' % len(vectorizer_stopwords.vocabulary_.keys()))
     logging.debug('The model found %d stopwords.' % len(vectorizer_stopwords.stop_words_))
 
-    logging.debug('TFIDF complete. About to start LSA.')
+    logging.debug('TFIDF complete.')
 
-    X = lsa.fit_transform(X)
+    lsa_data = lsa.fit_transform(tfidf_data)
     explained_variance = svd.explained_variance_ratio_.sum()
     logging.debug('with %d documents, %d components, and %d features we have %.2f explained variance.' %
-                  (len(X), n_components, n_features, explained_variance))
+                  (len(lsa_data), n_components, n_features, explained_variance))
 
     logging.debug("Clustering sparse data with %s" % km)
-    km.fit(X)
+    km.fit(lsa_data)
 
-    logging.debug("Silhouette Coefficient: %0.3f" % metrics.silhouette_score(X, km.labels_, sample_size=1000))
+    logging.debug("Silhouette Coefficient: %0.3f" % metrics.silhouette_score(tfidf_data, km.labels_, sample_size=1000))
     logging.debug("Top terms per cluster:")
     original_space_centroids = svd.inverse_transform(km.cluster_centers_)
     order_centroids = original_space_centroids.argsort()[:, ::-1]
@@ -213,7 +218,7 @@ def run():
 
     # use t-SNE to visualize
     model_tsne = TSNE(n_components=2, random_state=random_state)
-    points_tsne = model_tsne.fit_transform(X)
+    points_tsne = model_tsne.fit_transform(lsa_data)
     figsize = (16, 9)
     pyplot.figure(figsize=figsize)
     color_map = 'Set1'  # 'plasma'
