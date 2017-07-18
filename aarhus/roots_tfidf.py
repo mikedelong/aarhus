@@ -107,12 +107,6 @@ def run():
                                          ngram_range=(ngram_range_min, ngram_range_max), stop_words='english',
                                          use_idf=use_idf)
 
-    if minibatch:
-        km = MiniBatchKMeans(batch_size=1000, init='k-means++', init_size=1000, n_clusters=true_k, n_init=1,
-                             random_state=random_state, verbose=kmeans_verbose)
-    else:
-        km = KMeans(init='k-means++', max_iter=100, n_clusters=true_k, n_init=1, random_state=random_state,
-                    verbose=kmeans_verbose)
 
     tf_vectorizer = CountVectorizer(max_df=0.95, max_features=n_features, min_df=2, stop_words='english')
 
@@ -151,7 +145,10 @@ def run():
                                                                           original_size))
 
     logging.debug('data extraction complete. Running TFIDF.')
-    _ = vectorizer_english.fit_transform(text_data)
+    tf_idf_initial = vectorizer_english.fit_transform(text_data)
+    estimated_k = tf_idf_initial.shape[0] * tf_idf_initial.shape[1] / tf_idf_initial.nnz
+    logging.debug('Initial k estimate before stopword removal: %d ' % estimated_k)
+
     logging.debug('The vocabulary contains %d words.' % len(vectorizer_english.vocabulary_.keys()))
     logging.debug('The model found %d stopwords.' % len(vectorizer_english.stop_words_))
 
@@ -177,6 +174,8 @@ def run():
                                            use_idf=use_idf)
     logging.debug('got the extended stopword list; rerunning TFIDF with the expanded list')
     tfidf_data = vectorizer_stopwords.fit_transform(text_data)
+    estimated_k = tfidf_data.shape[0] * tfidf_data.shape[1] / tfidf_data.nnz
+    logging.debug('From shape and nnz data we estimate true K to be %d' % estimated_k)
     logging.debug('The vocabulary contains %d words.' % len(vectorizer_stopwords.vocabulary_.keys()))
     logging.debug('The model found %d stopwords.' % len(vectorizer_stopwords.stop_words_))
 
@@ -186,6 +185,15 @@ def run():
     explained_variance = svd.explained_variance_ratio_.sum()
     logging.debug('with %d documents, %d components, and %d features we have %.2f explained variance.' %
                   (len(lsa_data), n_components, n_features, explained_variance))
+
+    logging.debug('Using k-means with k = %d rather than setting k %d' % (estimated_k, true_k))
+    true_k = estimated_k
+    if minibatch:
+        km = MiniBatchKMeans(batch_size=1000, init='k-means++', init_size=1000, n_clusters=true_k, n_init=1,
+                             random_state=random_state, verbose=kmeans_verbose)
+    else:
+        km = KMeans(init='k-means++', max_iter=100, n_clusters=true_k, n_init=1, random_state=random_state,
+                    verbose=kmeans_verbose)
 
     logging.debug("Clustering sparse data with %s" % km)
     km.fit(lsa_data)
