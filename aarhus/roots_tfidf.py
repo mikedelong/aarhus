@@ -186,8 +186,12 @@ def run():
     logging.debug('with %d documents, %d components, and %d features we have %.2f explained variance.' %
                   (len(lsa_data), n_components, n_features, explained_variance))
 
+    if true_k == 0 or true_k == -1:
+        logging.debug('Using empirical k for k-means %d' % estimated_k)
+        true_k = estimated_k
+    else:
+        logging.debug('Using k-means with setting k = %d rather than empirical k %d' % (true_k, estimated_k))
     logging.debug('Using k-means with k = %d rather than setting k %d' % (estimated_k, true_k))
-    true_k = estimated_k
     if minibatch:
         km = MiniBatchKMeans(batch_size=1000, init='k-means++', init_size=1000, n_clusters=true_k, n_init=1,
                              random_state=random_state, verbose=kmeans_verbose)
