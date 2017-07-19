@@ -15,8 +15,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.manifold import TSNE
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import Normalizer
-from sklearn import metrics
 
+import random
 
 # http://mypy.pythonblogs.com/12_mypy/archive/1253_workaround_for_python_bug_ascii_codec_cant_encode_character_uxa0_in_position_111_ordinal_not_in_range128.html
 reload(sys)
@@ -101,9 +101,7 @@ def run():
         use_idf = bool(data['tfidf_use_idf'])
         write_tfidf_vocabulary = data['write_tfidf_vocabulary']
 
-    svd = TruncatedSVD(n_components, random_state=random_state)
-    normalizer = Normalizer(copy=False)
-    lsa = make_pipeline(svd, normalizer)
+    random.seed(random_state)
 
     vectorizer_english = TfidfVectorizer(max_df=max_df, max_features=n_features, min_df=min_df,
                                          ngram_range=(ngram_range_min, ngram_range_max), stop_words='english',
@@ -122,22 +120,23 @@ def run():
     count = 0
     text_data = list()
     documents_processed = list()
-    for key in roots.keys():
+    sample_keys = random.sample(roots.keys(), limit)
+    for key in sample_keys: #roots.keys():
         value = roots[key]
-        if count < limit:
-            body = get_email_body(value)
-            if body is not None:
-                if False:
+        # if count < limit:
+        body = get_email_body(value)
+        if body is not None:
+            if False:
+                pass
+            else:
+                try:
+                    decoded = body.decode('utf-8', 'ignore')
+                    text_data.append(decoded)
+                    documents_processed.append(key)
+                except UnicodeDecodeError as unicodeDecodeError:
+                    logging.warn(unicodeDecodeError)
                     pass
-                else:
-                    try:
-                        decoded = body.decode('utf-8', 'ignore')
-                        text_data.append(decoded)
-                        documents_processed.append(key)
-                    except UnicodeDecodeError as unicodeDecodeError:
-                        logging.warn(unicodeDecodeError)
-                    pass
-        count += 1
+        # count += 1
 
     actual_size = len(text_data)
     logging.debug('After ignoring documents with unicode decode errors we have %d messages.' % actual_size)
@@ -181,7 +180,14 @@ def run():
     logging.debug('The vocabulary contains %d words.' % len(vectorizer_stopwords.vocabulary_.keys()))
     logging.debug('The model found %d stopwords.' % len(vectorizer_stopwords.stop_words_))
 
-    logging.debug('TFIDF complete.')
+    logging.debug('TFIDF complete; shape  = %d x %d' % tfidf_data.shape)
+
+    if n_components == -1:
+        n_components = tfidf_data.shape[0]-1
+        logging.debug('Using size of tf-idf matrix for SVD dimensions %d' % n_components)
+    svd = TruncatedSVD(n_components, random_state=random_state)
+    normalizer = Normalizer(copy=False)
+    lsa = make_pipeline(svd, normalizer)
 
     lsa_data = lsa.fit_transform(tfidf_data)
     explained_variance = svd.explained_variance_ratio_.sum()
