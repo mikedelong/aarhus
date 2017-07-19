@@ -210,6 +210,7 @@ def run():
     logging.debug("Clustering sparse data with %s" % km)
     km.fit(lsa_data)
 
+    cluster_counts = collections.Counter(km.labels_)
     logging.debug("Silhouette Coefficient: %0.3f" % metrics.silhouette_score(tfidf_data, km.labels_, sample_size=1000))
     logging.debug("Top terms per cluster:")
     original_space_centroids = svd.inverse_transform(km.cluster_centers_)
@@ -217,7 +218,7 @@ def run():
     terms = vectorizer_stopwords.get_feature_names()
     for jndex in range(true_k):
         logging.debug('Cluster %d: %d : %s' % (
-            jndex, km.counts_[jndex], [terms[index] for index in order_centroids[jndex, :terms_to_print]]))
+            jndex, cluster_counts[jndex], [terms[index] for index in order_centroids[jndex, :terms_to_print]]))
 
     if write_tfidf_vocabulary:
         logging.debug('Writing tf-idf vocabulary to %s' % tfidf_vocabulary_file)
@@ -226,7 +227,7 @@ def run():
                 output_fp.write('%s,%d \n' % (key, value))
 
     logging.debug('lengths of labels: %d, documents processed: %d' % (len(km.labels_), len(documents_processed)))
-    largest_cluster_number = collections.Counter(km.labels_).most_common(1)[0][0]
+    largest_cluster_number = cluster_counts.most_common(1)[0][0]
     largest_cluster = sorted([int(item[1]) for item in zip(km.labels_, documents_processed) if
                               item[0] == largest_cluster_number])
     logging.debug('largest cluster: %d (%d) : %s' % (largest_cluster_number, len(largest_cluster), largest_cluster))
