@@ -225,6 +225,10 @@ def run():
                               item[0] == largest_cluster_number])
     logging.debug('largest cluster: %d (%d) : %s' % (largest_cluster_number, len(largest_cluster), largest_cluster))
 
+    # note that our labels are fake
+    labels = range(0, len(km.labels_))
+    homogeneity_score = metrics.homogeneity_score(labels, km.labels_)
+    logging.debug("Homogeneity: %0.3f" % homogeneity_score)
 
     # use t-SNE to visualize
     model_tsne = TSNE(n_components=2, random_state=random_state)
