@@ -15,6 +15,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.manifold import TSNE
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import Normalizer
+from sklearn import metrics
+
 
 # http://mypy.pythonblogs.com/12_mypy/archive/1253_workaround_for_python_bug_ascii_codec_cant_encode_character_uxa0_in_position_111_ordinal_not_in_range128.html
 reload(sys)
@@ -222,6 +224,7 @@ def run():
     largest_cluster = sorted([int(item[1]) for item in zip(km.labels_, documents_processed) if
                               item[0] == largest_cluster_number])
     logging.debug('largest cluster: %d (%d) : %s' % (largest_cluster_number, len(largest_cluster), largest_cluster))
+
 
     # use t-SNE to visualize
     model_tsne = TSNE(n_components=2, random_state=random_state)
