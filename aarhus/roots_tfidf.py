@@ -247,6 +247,7 @@ def run():
                    c=km.labels_.astype(numpy.float), cmap=color_map, marker='x')
     pyplot.colorbar(ticks=[range(0, true_k)])
     pyplot.tight_layout()
+    # todo make this a setting
     pyplot.savefig('./roots_tfidf.png')
 
     # todo add a tooltip that will show the topic on hover
