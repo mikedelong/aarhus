@@ -212,6 +212,9 @@ def run():
 
     cluster_counts = collections.Counter(km.labels_)
     logging.debug("Silhouette Coefficient: %0.3f" % metrics.silhouette_score(tfidf_data, km.labels_, sample_size=1000))
+
+    # todo change this code so we write out all terms of a certain significance or higher
+    # rather than a fixed-length list
     logging.debug("Top terms per cluster:")
     original_space_centroids = svd.inverse_transform(km.cluster_centers_)
     order_centroids = original_space_centroids.argsort()[:, ::-1]
