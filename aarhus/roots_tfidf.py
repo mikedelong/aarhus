@@ -83,10 +83,11 @@ def run():
     with open('roots-tfidf-settings.json') as data_file:
         data = json.load(data_file)
         logging.debug(json.dumps(data, sort_keys=True, indent=4, separators=(',', ': ')))
-        limit = int(data['document_count_limit'])
-        limit = sys.maxint if limit == -1 else limit
+        figure_output_file = data['figure_output_file']
         input_pickle_file = data['input_pickle_file']
         kmeans_verbose = bool(data['k_means_verbose'])
+        limit = int(data['document_count_limit'])
+        limit = sys.maxint if limit == -1 else limit
         minibatch = bool(data['k_means_minibatch'])
         max_df = float(data['max_df'])
         min_df = float(data['min_df'])
@@ -118,13 +119,11 @@ def run():
 
     # http://scikit-learn.org/stable/auto_examples/text/document_clustering.html
     logging.debug('After pickle load we have %d messages.' % len(roots))
-    count = 0
     text_data = list()
     documents_processed = list()
     sample_keys = random.sample(roots.keys(), limit)
-    for key in sample_keys: #roots.keys():
+    for key in sample_keys:
         value = roots[key]
-        # if count < limit:
         body = get_email_body(value)
         if body is not None:
             if False:
@@ -137,7 +136,6 @@ def run():
                 except UnicodeDecodeError as unicodeDecodeError:
                     logging.warn(unicodeDecodeError)
                     pass
-        # count += 1
 
     actual_size = len(text_data)
     logging.debug('After ignoring documents with unicode decode errors we have %d messages.' % actual_size)
@@ -249,8 +247,7 @@ def run():
                    c=km.labels_.astype(numpy.float), cmap=color_map, marker='x')
     pyplot.colorbar(ticks=[range(0, true_k)])
     pyplot.tight_layout()
-    # todo make this a setting
-    pyplot.savefig('./roots_tfidf.png')
+    pyplot.savefig(figure_output_file)
 
     # todo add a tooltip that will show the topic on hover
     finish_time = time.time()
