@@ -5,6 +5,7 @@ import pickle
 import sys
 import time
 
+import mpld3
 import numpy
 from matplotlib import pyplot as pyplot
 from sklearn import metrics
@@ -213,8 +214,6 @@ def run():
     cluster_counts = collections.Counter(km.labels_)
     logging.debug("Silhouette Coefficient: %0.3f" % metrics.silhouette_score(tfidf_data, km.labels_, sample_size=1000))
 
-    # todo change this code so we write out all terms of a certain significance or higher
-    # rather than a fixed-length list
     logging.debug("Top terms per cluster:")
     original_space_centroids = svd.inverse_transform(km.cluster_centers_)
     order_centroids = original_space_centroids.argsort()[:, ::-1]
@@ -244,9 +243,9 @@ def run():
     model_tsne = TSNE(n_components=2, random_state=random_state)
     points_tsne = model_tsne.fit_transform(lsa_data)
     figsize = (16, 9)
-    pyplot.figure(figsize=figsize)
+    fig = pyplot.figure(figsize=figsize)
     color_map = 'Set1'  # 'plasma'
-    pyplot.scatter([each[0] for each in points_tsne], [each[1] for each in points_tsne],
+    scatter_plot = pyplot.scatter([each[0] for each in points_tsne], [each[1] for each in points_tsne],
                    c=km.labels_.astype(numpy.float), cmap=color_map, marker='x')
     pyplot.colorbar(ticks=[range(0, true_k)])
     pyplot.tight_layout()
@@ -254,12 +253,20 @@ def run():
     pyplot.savefig('./roots_tfidf.png')
 
     # todo add a tooltip that will show the topic on hover
-
     finish_time = time.time()
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
     elapsed_minutes, elapsed_seconds = divmod(elapsed_remainder, 60)
     logging.info("Time: {:0>2}:{:0>2}:{:05.2f}".format(int(elapsed_hours), int(elapsed_minutes), elapsed_seconds))
-    pyplot.show()
+    # pyplot.show()
+
+    # pop up a D3 view of the data with message labels
+    # todo use the document name instead
+    # todo use the topic words
+    tooltip_labels = [str(item) for item in labels]
+    tooltip = mpld3.plugins.PointLabelTooltip(scatter_plot, labels=tooltip_labels)
+    mpld3.plugins.connect(fig, tooltip)
+
+    mpld3.show()
 
 
 if __name__ == '__main__':
