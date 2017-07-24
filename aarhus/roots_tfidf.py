@@ -249,7 +249,6 @@ def run():
     pyplot.tight_layout()
     pyplot.savefig(figure_output_file)
 
-    # todo add a tooltip that will show the topic on hover
     finish_time = time.time()
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
     elapsed_minutes, elapsed_seconds = divmod(elapsed_remainder, 60)
