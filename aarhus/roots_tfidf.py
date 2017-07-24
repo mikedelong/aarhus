@@ -233,8 +233,8 @@ def run():
     logging.debug('largest cluster: %d (%d) : %s' % (largest_cluster_number, len(largest_cluster), largest_cluster))
 
     # note that our labels are fake
-    labels = range(0, len(km.labels_))
-    homogeneity_score = metrics.homogeneity_score(labels, km.labels_)
+    # labels = range(0, len(km.labels_))
+    homogeneity_score = metrics.homogeneity_score(documents_processed, km.labels_)
     logging.debug("Homogeneity: %0.3f" % homogeneity_score)
 
     # use t-SNE to visualize
@@ -258,7 +258,7 @@ def run():
     # pop up a D3 view of the data with message labels
     # todo use the document name instead
     # todo use the topic words
-    tooltip_labels = [str(item) for item in labels]
+    tooltip_labels = [str(item) for item in documents_processed]
     tooltip = mpld3.plugins.PointLabelTooltip(scatter_plot, labels=tooltip_labels)
     mpld3.plugins.connect(fig, tooltip)
 
