@@ -216,9 +216,11 @@ def run():
     original_space_centroids = svd.inverse_transform(km.cluster_centers_)
     order_centroids = original_space_centroids.argsort()[:, ::-1]
     terms = vectorizer_stopwords.get_feature_names()
+    cluster_topic_terms = list()
     for jndex in range(true_k):
+        cluster_topic_terms.append( str([terms[index] for index in order_centroids[jndex, :terms_to_print]]))
         logging.debug('Cluster %d: %d : %s' % (
-            jndex, cluster_counts[jndex], [terms[index] for index in order_centroids[jndex, :terms_to_print]]))
+            jndex, cluster_counts[jndex], cluster_topic_terms[jndex]))
 
     if write_tfidf_vocabulary:
         logging.debug('Writing tf-idf vocabulary to %s' % tfidf_vocabulary_file)
@@ -255,7 +257,7 @@ def run():
 
     # pop up a D3 view of the data with message labels
     # todo use the topic words
-    tooltip_labels = [str(item) for item in documents_processed]
+    tooltip_labels = [str(item) + "\nfoo" for item in documents_processed]
     tooltip = mpld3.plugins.PointLabelTooltip(scatter_plot, labels=tooltip_labels)
     mpld3.plugins.connect(fig, tooltip)
 
