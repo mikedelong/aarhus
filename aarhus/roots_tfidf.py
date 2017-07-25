@@ -237,10 +237,15 @@ def run():
     homogeneity_score = metrics.homogeneity_score(documents_processed, km.labels_)
     logging.debug("Homogeneity: %0.3f" % homogeneity_score)
 
+    # build the labels
+    tooltip_labels = list()
+    for pair in zip(documents_processed, km.labels_):
+        label = str(pair[0]) + ' :  ' + cluster_topic_terms[pair[1]]
+        tooltip_labels.append(label)
     # use t-SNE to visualize
     model_tsne = TSNE(n_components=2, random_state=random_state)
     points_tsne = model_tsne.fit_transform(lsa_data)
-    figsize = (16, 9)
+    figsize = (20, 10)
     fig = pyplot.figure(figsize=figsize)
     color_map = 'Set1'  # 'plasma'
     scatter_plot = pyplot.scatter([each[0] for each in points_tsne], [each[1] for each in points_tsne],
@@ -256,8 +261,6 @@ def run():
     # pyplot.show()
 
     # pop up a D3 view of the data with message labels
-    # todo use the topic words
-    tooltip_labels = [str(item) + "\nfoo" for item in documents_processed]
     tooltip = mpld3.plugins.PointLabelTooltip(scatter_plot, labels=tooltip_labels)
     mpld3.plugins.connect(fig, tooltip)
 
