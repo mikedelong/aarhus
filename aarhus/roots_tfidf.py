@@ -89,7 +89,6 @@ def run():
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
 
-    # logging.basicConfig(format='%(asctime)s : %(levelname)s :: %(message)s', level=logger.debug)
     logger.debug('started.')
 
     with open('roots-tfidf-settings.json') as data_file:
@@ -218,13 +217,13 @@ def run():
         km = KMeans(init='k-means++', max_iter=100, n_clusters=true_k, n_init=1, random_state=random_state,
                     verbose=kmeans_verbose)
 
-    logger.debug("Clustering sparse data with %s" % km)
+    logger.debug('Clustering sparse data with %s' % km)
     km.fit(lsa_data)
 
     cluster_counts = collections.Counter(km.labels_)
-    logger.debug("Silhouette Coefficient: %0.3f" % metrics.silhouette_score(tfidf_data, km.labels_, sample_size=1000))
+    logger.debug('Silhouette Coefficient: %0.3f' % metrics.silhouette_score(tfidf_data, km.labels_, sample_size=1000))
 
-    logger.debug("Top terms per cluster:")
+    logger.debug('Top terms per cluster:')
     original_space_centroids = svd.inverse_transform(km.cluster_centers_)
     order_centroids = original_space_centroids.argsort()[:, ::-1]
     terms = vectorizer_stopwords.get_feature_names()
@@ -247,7 +246,7 @@ def run():
     logger.debug('largest cluster: %d (%d) : %s' % (largest_cluster_number, len(largest_cluster), largest_cluster))
 
     homogeneity_score = metrics.homogeneity_score(documents_processed, km.labels_)
-    logger.debug("Homogeneity: %0.3f" % homogeneity_score)
+    logger.debug('Homogeneity: %0.3f' % homogeneity_score)
 
     # build the labels
     tooltip_labels = list()
@@ -269,7 +268,7 @@ def run():
     finish_time = time.time()
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
     elapsed_minutes, elapsed_seconds = divmod(elapsed_remainder, 60)
-    logger.info("Time: {:0>2}:{:0>2}:{:05.2f}".format(int(elapsed_hours), int(elapsed_minutes), elapsed_seconds))
+    logger.info('Time: {:0>2}:{:0>2}:{:05.2f}'.format(int(elapsed_hours), int(elapsed_minutes), elapsed_seconds))
     # pyplot.show()
 
     # pop up a D3 view of the data with message labels
