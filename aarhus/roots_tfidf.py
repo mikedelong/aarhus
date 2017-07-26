@@ -23,7 +23,6 @@ import random
 reload(sys)
 sys.setdefaultencoding("utf8")
 
-logging.basicConfig(format='%(asctime)s : %(levelname)s :: %(message)s', level=logging.DEBUG)
 
 
 def get_character_sets(arg_message):
@@ -34,14 +33,14 @@ def get_character_sets(arg_message):
     return charsets
 
 
-def handle_error(arg_error_message, arg_email_message, arg_character_set):
-    logging.warn('message: %s character_set: %s character sets found: %s subject: %s sender: %s' %
+def handle_error(arg_logger, arg_error_message, arg_email_message, arg_character_set):
+    arg_logger.warn('message: %s character_set: %s character sets found: %s subject: %s sender: %s' %
                  (arg_error_message, arg_character_set, get_character_sets(arg_email_message),
                   arg_email_message['subject'], arg_email_message['from']))
 
 
 # https://stackoverflow.com/questions/7166922/extracting-the-body-of-an-email-from-mbox-file-decoding-it-to-plain-text-regard
-def get_email_body(arg_message):
+def get_email_body(arg_logger, arg_message):
     body = None
     # Walk through the parts of the email to find the text body.
     if arg_message.is_multipart():
@@ -68,21 +67,34 @@ def get_email_body(arg_message):
         try:
             body = body.decode(charset)
         except UnicodeDecodeError:
-            handle_error("UnicodeDecodeError: encountered.", arg_message, charset)
+            handle_error(arg_logger, "UnicodeDecodeError: encountered.", arg_message, charset)
         except AttributeError:
-            handle_error("AttributeError: encountered", arg_message, charset)
+            handle_error(arg_logger, "AttributeError: encountered", arg_message, charset)
         except LookupError:
-            handle_error("LookupError: encountered", arg_message, charset)
+            handle_error(arg_logger, "LookupError: encountered", arg_message, charset)
     return body
 
 
 def run():
     start_time = time.time()
-    logging.debug('started.')
+    formatter = logging.Formatter('%(asctime)s : %(name)s :: %(levelname)s : %(message)s')
+    logger = logging.getLogger('main')
+    logger.setLevel(logging.DEBUG)
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.DEBUG)
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+    file_handler = logging.FileHandler('./roots_tfidf.log')
+    file_handler.setLevel(logging.DEBUG)
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+
+    # logging.basicConfig(format='%(asctime)s : %(levelname)s :: %(message)s', level=logger.debug)
+    logger.debug('started.')
 
     with open('roots-tfidf-settings.json') as data_file:
         data = json.load(data_file)
-        logging.debug(json.dumps(data, sort_keys=True, indent=4, separators=(',', ': ')))
+        logger.debug(json.dumps(data, sort_keys=True, indent=4, separators=(',', ': ')))
         figure_output_file = data['figure_output_file']
         input_pickle_file = data['input_pickle_file']
         kmeans_verbose = bool(data['k_means_verbose'])
@@ -118,13 +130,13 @@ def run():
         roots = pickle.load(input_fp)
 
     # http://scikit-learn.org/stable/auto_examples/text/document_clustering.html
-    logging.debug('After pickle load we have %d messages.' % len(roots))
+    logger.debug('After pickle load we have %d messages.' % len(roots))
     text_data = list()
     documents_processed = list()
     sample_keys = random.sample(roots.keys(), limit)
     for key in sample_keys:
         value = roots[key]
-        body = get_email_body(value)
+        body = get_email_body(logger, value)
         if body is not None:
             if False:
                 pass
@@ -138,26 +150,26 @@ def run():
                     pass
 
     actual_size = len(text_data)
-    logging.debug('After ignoring documents with unicode decode errors we have %d messages.' % actual_size)
+    logger.debug('After ignoring documents with unicode decode errors we have %d messages.' % actual_size)
     original_size = (min(limit, len(roots)))
     loss_percent = (100 * (original_size - actual_size) / original_size)
-    logging.debug('We lost %d percent due to unicode errors: %d of %d' % (loss_percent, (original_size - actual_size),
+    logger.debug('We lost %d percent due to unicode errors: %d of %d' % (loss_percent, (original_size - actual_size),
                                                                           original_size))
 
-    logging.debug('data extraction complete. Running TFIDF.')
+    logger.debug('data extraction complete. Running TFIDF.')
     tf_idf_initial = vectorizer_english.fit_transform(text_data)
     estimated_k = tf_idf_initial.shape[0] * tf_idf_initial.shape[1] / tf_idf_initial.nnz
-    logging.debug('Initial k estimate before stopword removal: %d ' % estimated_k)
+    logger.debug('Initial k estimate before stopword removal: %d ' % estimated_k)
 
-    logging.debug('The vocabulary contains %d words.' % len(vectorizer_english.vocabulary_.keys()))
-    logging.debug('The model found %d stopwords.' % len(vectorizer_english.stop_words_))
+    logger.debug('The vocabulary contains %d words.' % len(vectorizer_english.vocabulary_.keys()))
+    logger.debug('The model found %d stopwords.' % len(vectorizer_english.stop_words_))
 
     stopwords = vectorizer_english.stop_words_
     additional_stopwords = set()
     with open(stopword_file, 'rb') as stopwords_fp:
         for item in iter(stopwords_fp):
             additional_stopwords.add(unicode(item.strip()))
-    logging.debug('Additional stopwords (%d): %s' % (len(additional_stopwords), sorted(list(additional_stopwords))))
+    logger.debug('Additional stopwords (%d): %s' % (len(additional_stopwords), sorted(list(additional_stopwords))))
     stopwords.update(additional_stopwords)
     # todo move these to a data file
     basic_stopwords = sorted(
@@ -166,39 +178,39 @@ def run():
          'just', 'know', 'call', 'sent', 'her', 'am', 'out', 'new', 'time', 'they', 'more', 'up', 'here', 'there',
          'get', 'best', 'one', 're', 'their', 'now', 'let', 'any', 'the', 'need', 'work', 'good', 'hope', 'should',
          'thank', 'how', 'have', 'been', 'no', 'could', 'also', 'make', 'its', 'some', 'may', 'think', 'when',
-         'said', 'today', 'like', 'going', 'him'])
-    logging.debug('basic stopwords: %s' % basic_stopwords)
+         'said', 'today', 'like', 'going', 'him', 'see', 'had', 'great', 'very'])
+    logger.debug('basic stopwords: %s' % basic_stopwords)
     stopwords.update(basic_stopwords)
     vectorizer_stopwords = TfidfVectorizer(max_df=max_df, max_features=n_features, min_df=min_df,
                                            ngram_range=(ngram_range_min, ngram_range_max), stop_words=stopwords,
                                            use_idf=use_idf)
-    logging.debug('got the extended stopword list; rerunning TFIDF with the expanded list')
+    logger.debug('got the extended stopword list; rerunning TFIDF with the expanded list')
     tfidf_data = vectorizer_stopwords.fit_transform(text_data)
     estimated_k = tfidf_data.shape[0] * tfidf_data.shape[1] / tfidf_data.nnz
-    logging.debug('From shape and nnz data we estimate true K to be %d' % estimated_k)
-    logging.debug('The vocabulary contains %d words.' % len(vectorizer_stopwords.vocabulary_.keys()))
-    logging.debug('The model found %d stopwords.' % len(vectorizer_stopwords.stop_words_))
+    logger.debug('From shape and nnz data we estimate true K to be %d' % estimated_k)
+    logger.debug('The vocabulary contains %d words.' % len(vectorizer_stopwords.vocabulary_.keys()))
+    logger.debug('The model found %d stopwords.' % len(vectorizer_stopwords.stop_words_))
 
-    logging.debug('TFIDF complete; shape  = %d x %d' % tfidf_data.shape)
+    logger.debug('TFIDF complete; shape  = %d x %d' % tfidf_data.shape)
 
     if n_components == -1:
         n_components = tfidf_data.shape[0]-1
-        logging.debug('Using size of tf-idf matrix for SVD dimensions %d' % n_components)
+        logger.debug('Using size of tf-idf matrix for SVD dimensions %d' % n_components)
     svd = TruncatedSVD(n_components, random_state=random_state)
     normalizer = Normalizer(copy=False)
     lsa = make_pipeline(svd, normalizer)
 
     lsa_data = lsa.fit_transform(tfidf_data)
     explained_variance = svd.explained_variance_ratio_.sum()
-    logging.debug('with %d documents, %d components, and %d features we have %.2f explained variance.' %
+    logger.debug('with %d documents, %d components, and %d features we have %.2f explained variance.' %
                   (len(lsa_data), n_components, n_features, explained_variance))
 
     if true_k == 0 or true_k == -1:
-        logging.debug('Using empirical k for k-means %d' % estimated_k)
+        logger.debug('Using empirical k for k-means %d' % estimated_k)
         true_k = estimated_k
     else:
-        logging.debug('Using k-means with setting k = %d rather than empirical k %d' % (true_k, estimated_k))
-    logging.debug('Using k-means with k = %d rather than setting k %d' % (estimated_k, true_k))
+        logger.debug('Using k-means with setting k = %d rather than empirical k %d' % (true_k, estimated_k))
+    logger.debug('Using k-means with k = %d rather than setting k %d' % (estimated_k, true_k))
     if minibatch:
         km = MiniBatchKMeans(batch_size=1000, init='k-means++', init_size=1000, n_clusters=true_k, n_init=1,
                              random_state=random_state, verbose=kmeans_verbose)
@@ -206,36 +218,36 @@ def run():
         km = KMeans(init='k-means++', max_iter=100, n_clusters=true_k, n_init=1, random_state=random_state,
                     verbose=kmeans_verbose)
 
-    logging.debug("Clustering sparse data with %s" % km)
+    logger.debug("Clustering sparse data with %s" % km)
     km.fit(lsa_data)
 
     cluster_counts = collections.Counter(km.labels_)
-    logging.debug("Silhouette Coefficient: %0.3f" % metrics.silhouette_score(tfidf_data, km.labels_, sample_size=1000))
+    logger.debug("Silhouette Coefficient: %0.3f" % metrics.silhouette_score(tfidf_data, km.labels_, sample_size=1000))
 
-    logging.debug("Top terms per cluster:")
+    logger.debug("Top terms per cluster:")
     original_space_centroids = svd.inverse_transform(km.cluster_centers_)
     order_centroids = original_space_centroids.argsort()[:, ::-1]
     terms = vectorizer_stopwords.get_feature_names()
     cluster_topic_terms = list()
     for jndex in range(true_k):
         cluster_topic_terms.append( str([terms[index] for index in order_centroids[jndex, :terms_to_print]]))
-        logging.debug('Cluster %d: %d : %s' % (
+        logger.debug('Cluster %d: %d : %s' % (
             jndex, cluster_counts[jndex], cluster_topic_terms[jndex]))
 
     if write_tfidf_vocabulary:
-        logging.debug('Writing tf-idf vocabulary to %s' % tfidf_vocabulary_file)
+        logger.debug('Writing tf-idf vocabulary to %s' % tfidf_vocabulary_file)
         with open(tfidf_vocabulary_file, 'wb') as output_fp:
             for key, value in vectorizer_stopwords.vocabulary_.iteritems():
                 output_fp.write('%s,%d \n' % (key, value))
 
-    logging.debug('lengths of labels: %d, documents processed: %d' % (len(km.labels_), len(documents_processed)))
+    logger.debug('lengths of labels: %d, documents processed: %d' % (len(km.labels_), len(documents_processed)))
     largest_cluster_number = cluster_counts.most_common(1)[0][0]
     largest_cluster = sorted([int(item[1]) for item in zip(km.labels_, documents_processed) if
                               item[0] == largest_cluster_number])
-    logging.debug('largest cluster: %d (%d) : %s' % (largest_cluster_number, len(largest_cluster), largest_cluster))
+    logger.debug('largest cluster: %d (%d) : %s' % (largest_cluster_number, len(largest_cluster), largest_cluster))
 
     homogeneity_score = metrics.homogeneity_score(documents_processed, km.labels_)
-    logging.debug("Homogeneity: %0.3f" % homogeneity_score)
+    logger.debug("Homogeneity: %0.3f" % homogeneity_score)
 
     # build the labels
     tooltip_labels = list()
@@ -257,7 +269,7 @@ def run():
     finish_time = time.time()
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
     elapsed_minutes, elapsed_seconds = divmod(elapsed_remainder, 60)
-    logging.info("Time: {:0>2}:{:0>2}:{:05.2f}".format(int(elapsed_hours), int(elapsed_minutes), elapsed_seconds))
+    logger.info("Time: {:0>2}:{:0>2}:{:05.2f}".format(int(elapsed_hours), int(elapsed_minutes), elapsed_seconds))
     # pyplot.show()
 
     # pop up a D3 view of the data with message labels
