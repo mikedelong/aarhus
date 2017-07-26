@@ -177,7 +177,9 @@ def run():
          'just', 'know', 'call', 'sent', 'her', 'am', 'out', 'new', 'time', 'they', 'more', 'up', 'here', 'there',
          'get', 'best', 'one', 're', 'their', 'now', 'let', 'any', 'the', 'need', 'work', 'good', 'hope', 'should',
          'thank', 'how', 'have', 'been', 'no', 'could', 'also', 'make', 'its', 'some', 'may', 'think', 'when',
-         'said', 'today', 'like', 'going', 'him', 'see', 'had', 'great', 'very', 'you', 'next'])
+         'said', 'today', 'like', 'going', 'him', 'see', 'had', 'great', 'very', 'you', 'next', 'send', 'this',
+         'and', 'for', 'from'])
+    logger.debug('we have %d stopwords of which %d are unique.' % (len(basic_stopwords), len(set(basic_stopwords))))
     logger.debug('basic stopwords: %s' % basic_stopwords)
     stopwords.update(basic_stopwords)
     vectorizer_stopwords = TfidfVectorizer(max_df=max_df, max_features=n_features, min_df=min_df,
