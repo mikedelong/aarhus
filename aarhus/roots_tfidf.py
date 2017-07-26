@@ -178,7 +178,8 @@ def run():
          'get', 'best', 'one', 're', 'their', 'now', 'let', 'any', 'the', 'need', 'work', 'good', 'hope', 'should',
          'thank', 'how', 'have', 'been', 'no', 'could', 'also', 'make', 'its', 'some', 'may', 'think', 'when',
          'said', 'today', 'like', 'going', 'him', 'see', 'had', 'great', 'very', 'you', 'next', 'send', 'this',
-         'and', 'for', 'from', 'look', 'forward', 'to', 'seeing', 'you', 'want', 'which', 'first', 'go'])
+         'and', 'for', 'from', 'look', 'forward', 'to', 'seeing', 'you', 'want', 'which', 'first', 'go', 'because',
+         'did', 'ask', 'meet', 'are'])
     logger.debug('we have %d stopwords of which %d are unique.' % (len(basic_stopwords), len(set(basic_stopwords))))
     logger.debug('basic stopwords: %s' % basic_stopwords)
     stopwords.update(basic_stopwords)
