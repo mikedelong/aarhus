@@ -179,7 +179,8 @@ def run():
          'thank', 'how', 'have', 'been', 'no', 'could', 'also', 'make', 'its', 'some', 'may', 'think', 'when',
          'said', 'today', 'like', 'going', 'him', 'see', 'had', 'great', 'very', 'you', 'next', 'send', 'this',
          'and', 'for', 'from', 'look', 'forward', 'to', 'seeing', 'want', 'which', 'first', 'go', 'because', 'were',
-         'did', 'ask', 'meet', 'are', 'lot', 'of', 'sure', 'after', 'help', 'receiving', 'via', 'big', 'over'])
+         'did', 'ask', 'meet', 'are', 'lot', 'of', 'sure', 'after', 'help', 'receiving', 'via', 'big', 'over',
+         'last', 'back', 'don', 'doing', 'wanted'])
     logger.debug('most common basic stopwords: %s' % collections.Counter(basic_stopwords).most_common(3))
     logger.debug('we have %d stopwords of which %d are unique.' % (len(basic_stopwords), len(set(basic_stopwords))))
     logger.debug('basic stopwords: %s' % basic_stopwords)
