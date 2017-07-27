@@ -24,7 +24,6 @@ reload(sys)
 sys.setdefaultencoding("utf8")
 
 
-
 def get_character_sets(arg_message):
     charsets = set({})
     for character_set in arg_message.get_charsets():
@@ -35,8 +34,8 @@ def get_character_sets(arg_message):
 
 def handle_error(arg_logger, arg_error_message, arg_email_message, arg_character_set):
     arg_logger.warn('message: %s character_set: %s character sets found: %s subject: %s sender: %s' %
-                 (arg_error_message, arg_character_set, get_character_sets(arg_email_message),
-                  arg_email_message['subject'], arg_email_message['from']))
+                    (arg_error_message, arg_character_set, get_character_sets(arg_email_message),
+                     arg_email_message['subject'], arg_email_message['from']))
 
 
 # https://stackoverflow.com/questions/7166922/extracting-the-body-of-an-email-from-mbox-file-decoding-it-to-plain-text-regard
@@ -120,7 +119,6 @@ def run():
                                          ngram_range=(ngram_range_min, ngram_range_max), stop_words='english',
                                          use_idf=use_idf)
 
-
     tf_vectorizer = CountVectorizer(max_df=0.95, max_features=n_features, min_df=2, stop_words='english')
 
     # tf = tf_vectorizer.fit_transform(data_samples)
@@ -153,7 +151,7 @@ def run():
     original_size = (min(limit, len(roots)))
     loss_percent = (100 * (original_size - actual_size) / original_size)
     logger.debug('We lost %d percent due to unicode errors: %d of %d' % (loss_percent, (original_size - actual_size),
-                                                                          original_size))
+                                                                         original_size))
 
     logger.debug('data extraction complete. Running TFIDF.')
     tf_idf_initial = vectorizer_english.fit_transform(text_data)
@@ -181,7 +179,7 @@ def run():
          'and', 'for', 'from', 'look', 'forward', 'to', 'seeing', 'want', 'which', 'first', 'go', 'because', 'were',
          'did', 'ask', 'meet', 'are', 'lot', 'of', 'sure', 'after', 'help', 'receiving', 'via', 'big', 'over',
          'last', 'back', 'don', 'doing', 'wanted', 'much', 'than', 'why', 'we', 'happy', 'end', 'less',
-         'in', 'use'])
+         'in', 'use', 'asked', 'say', 'with', 'on', 'these'])
     logger.debug('most common basic stopwords: %s' % collections.Counter(basic_stopwords).most_common(3))
     logger.debug('we have %d stopwords of which %d are unique.' % (len(basic_stopwords), len(set(basic_stopwords))))
     logger.debug('basic stopwords: %s' % basic_stopwords)
@@ -199,7 +197,7 @@ def run():
     logger.debug('TFIDF complete; shape  = %d x %d' % tfidf_data.shape)
 
     if n_components == -1:
-        n_components = tfidf_data.shape[0]-1
+        n_components = tfidf_data.shape[0] - 1
         logger.debug('Using size of tf-idf matrix for SVD dimensions %d' % n_components)
     svd = TruncatedSVD(n_components, random_state=random_state)
     normalizer = Normalizer(copy=False)
@@ -208,7 +206,7 @@ def run():
     lsa_data = lsa.fit_transform(tfidf_data)
     explained_variance = svd.explained_variance_ratio_.sum()
     logger.debug('with %d documents, %d components, and %d features we have %.2f explained variance.' %
-                  (len(lsa_data), n_components, n_features, explained_variance))
+                 (len(lsa_data), n_components, n_features, explained_variance))
 
     if true_k == 0 or true_k == -1:
         logger.debug('Using empirical k for k-means %d' % estimated_k)
@@ -235,9 +233,9 @@ def run():
     terms = vectorizer_stopwords.get_feature_names()
     cluster_topic_terms = list()
     for jndex in range(true_k):
-        cluster_topic_terms.append( str([terms[index] for index in order_centroids[jndex, :terms_to_print]]))
-        logger.debug('Cluster %d: %d : %s' % (
-            jndex, cluster_counts[jndex], cluster_topic_terms[jndex]))
+        cluster_topic_terms.append(str([terms[index] for index in order_centroids[jndex, :terms_to_print]]))
+        logger.debug('Cluster %d: %d (%.2f) : %s' % (
+        jndex, cluster_counts[jndex], float(cluster_counts[jndex]) / float(actual_size), cluster_topic_terms[jndex]))
 
     if write_tfidf_vocabulary:
         logger.debug('Writing tf-idf vocabulary to %s' % tfidf_vocabulary_file)
@@ -266,7 +264,7 @@ def run():
     fig = pyplot.figure(figsize=figsize)
     color_map = 'Set1'  # 'plasma'
     scatter_plot = pyplot.scatter([each[0] for each in points_tsne], [each[1] for each in points_tsne],
-                   c=km.labels_.astype(numpy.float), cmap=color_map, marker='x')
+                                  c=km.labels_.astype(numpy.float), cmap=color_map, marker='x')
     pyplot.colorbar(ticks=[range(0, true_k)])
     pyplot.tight_layout()
     pyplot.savefig(figure_output_file)
@@ -275,7 +273,6 @@ def run():
     elapsed_hours, elapsed_remainder = divmod(finish_time - start_time, 3600)
     elapsed_minutes, elapsed_seconds = divmod(elapsed_remainder, 60)
     logger.info('Time: {:0>2}:{:0>2}:{:05.2f}'.format(int(elapsed_hours), int(elapsed_minutes), elapsed_seconds))
-    # pyplot.show()
 
     # pop up a D3 view of the data with message labels
     tooltip = mpld3.plugins.PointLabelTooltip(scatter_plot, labels=tooltip_labels)
