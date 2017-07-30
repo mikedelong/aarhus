@@ -1,10 +1,11 @@
 import glob
+import json
 import logging
 import math
 import pickle
 import random
 import time
-import json
+
 import matplotlib.pyplot as pyplot
 
 start_time = time.time()
@@ -28,7 +29,6 @@ files_to_process = list()
 do_all_files = False
 do_planet_ebook_files = True
 
-planet_ebook_files = None
 with open(input_file_list, 'rb') as input_fp:
     planet_ebook_files = input_fp.readlines()
 planet_ebook_files = [each.strip() for each in planet_ebook_files]
