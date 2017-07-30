@@ -49,9 +49,9 @@ for input_file, short_name in zip(files_to_process, planet_ebook_files):
     logging.debug(input_file)
     with open(input_file, 'rb') as input_fp:
         item = pickle.load(input_fp)
-        counts.append(len(item))
+        counts.append(len(item['text']))
         log_counts.append(math.log(len(item)))
-        names.append(short_name.replace('-', ' ') + ' (' + str(len(item)) + ')')
+        names.append(short_name.replace('-', ' ') + ' (' + str(len(item['text'])) + ')')
 
 # sort the data by the page counts
 t0 = sorted(zip(counts, names))
