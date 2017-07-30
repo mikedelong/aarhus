@@ -5,7 +5,6 @@ import pickle
 import random
 import time
 import json
-import csv
 import matplotlib.pyplot as pyplot
 
 start_time = time.time()
