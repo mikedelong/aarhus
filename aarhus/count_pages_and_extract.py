@@ -13,6 +13,7 @@ from pdfminer.pdfpage import PDFPage
 from pyPdf import PdfFileReader
 import json
 
+
 # note that this version returns a list of strings, one string per page
 def convert_pdf_to_txt(arg_path, arg_codec='utf-8', arg_verbose=False):
     resource_manager = PDFResourceManager()
