@@ -66,6 +66,7 @@ for index, name in enumerate(names):
     pyplot.annotate(name, (index, index), fontsize=8)
 
 pyplot.tight_layout()
+# todo move these to settings
 output_file_suffix = '.png'
 out_file = output_folder + 'planet_ebook_file_size_plot' + output_file_suffix
 logging.debug('writing figure to output file %s' % out_file)
