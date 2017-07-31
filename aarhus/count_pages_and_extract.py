@@ -1,4 +1,5 @@
 import glob
+import json
 import logging
 import pickle
 import time
@@ -11,7 +12,6 @@ from pdfminer.layout import LAParams
 from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.pdfpage import PDFPage
 from pyPdf import PdfFileReader
-import json
 
 
 # note that this version returns a list of strings, one string per page
