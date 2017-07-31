@@ -15,7 +15,7 @@ from pyPdf import PdfFileReader
 
 
 # note that this version returns a list of strings, one string per page
-def convert_pdf_to_txt(arg_path, arg_codec='utf-8', arg_verbose=False):
+def convert_pdf_to_text(arg_path, arg_codec='utf-8', arg_verbose=False):
     resource_manager = PDFResourceManager()
     result_string = StringIO()
     laparams = LAParams()
@@ -82,7 +82,7 @@ for file_name in files_to_process:
                 if number_of_pages > threshold:
                     count += 1
                     logging.debug('%d %d : %s' % (count, number_of_pages, file_name))
-                    text = convert_pdf_to_txt(arg_path=file_name, arg_verbose=True)
+                    text = convert_pdf_to_text(arg_path=file_name, arg_verbose=True)
                     with open(output_file, 'wb') as pickle_fp:
                         pickle.dump(text, pickle_fp)
             except AssertionError as assertionError:
