@@ -5,6 +5,7 @@ import pickle
 import time
 from os.path import basename
 
+import itertools
 import nltk
 import numpy
 import pylab
@@ -495,9 +496,10 @@ for input_file_with_suffix in files_to_process:
 
             tsne_init = 'random'  # could also be 'pca'
             # we would really like this to be related to the centroids from the k-means
-            tsne_perplexity = 30.0
+            # todo initialize with the k-means centroids
+            tsne_perplexity = 50.0
             tsne_early_exaggeration = 4.0
-            tsne_learning_rate = 1000.0
+            tsne_learning_rate = 300  # was1000.0
             model = TSNE(n_components=2, random_state=random_state, init=tsne_init, perplexity=tsne_perplexity,
                          early_exaggeration=tsne_early_exaggeration, learning_rate=tsne_learning_rate)
             if False:
@@ -514,16 +516,32 @@ for input_file_with_suffix in files_to_process:
 
             logger.debug('finished TSNE')
             colormap = 'plasma'  # was 'gnuplot'
-            xs = [each[0] for each in scatter_points]
-            ys = [each[1] for each in scatter_points]
             figsize = (16, 9)
             pylab.figure(figsize=figsize)
-            index = 1
+            xs = numpy.array([each[0] for each in scatter_points])
+            ys = numpy.array([each[1] for each in scatter_points])
+            if False:
+                clusters = numpy.array(km.labels_)
+                marker_choices = ['o', 'v', '^', '<', '>', '1', '2', '3', '4', '8', 's', 'p', '*', 'h', 'H', '+', 'x', 'D', 'd']
+                # markers = itertools.cycle(marker_choices)
+                x1 = len(marker_choices)
+                # all_data = zip(xs, ys, km.labels_)
+                different_labels = set(km.labels_)
+                marker_count = min(10, len(marker_choices))
+                x0 = len(different_labels) / marker_count
+                colors = pylab.cm.plasma(numpy.linspace(0, 1, x0))
+                # todo use a numpy array with a filter
+                for index, marker in enumerate(marker_choices[:marker_count]):
+                    pylab.scatter(xs[clusters == index], ys[clusters == index], marker=marker, c=colors)
+
+
             pylab.scatter(xs, ys, marker='x', c=km.labels_, cmap=colormap)
-            for x, y in zip(xs, ys):
-                # for the moment let's remove the page numbers
-                # pylab.text(x, y, str(index), color='k', fontsize=6)
-                index += 1
+            index = 1
+            if False:
+                for x, y in zip(xs, ys):
+                    # for the moment let's remove the page numbers
+                    pylab.text(x, y, str(index), color='k', fontsize=6)
+                    index += 1
             # pylab.margins(0.1)
             title = ' '.join([basename(file_name_root), 'pages: ', str(len(text)), 'clusters:', str(true_k)])
             pylab.title(title)
