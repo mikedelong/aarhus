@@ -11,6 +11,7 @@ matplotlib.use("Agg")
 
 import nltk
 import pylab
+import matplotlib.animation as animation
 from nltk.stem.porter import PorterStemmer
 from nltk.stem.snowball import SnowballStemmer
 from sklearn import metrics
@@ -52,6 +53,9 @@ logger.debug('started.')
 
 input_file = ''
 
+# Set up formatting for the movie files
+Writer = animation.writers['ffmpeg']
+writer = Writer(fps=15, metadata=dict(artist='...'), bitrate=1800)
 
 
 odyssey = 'The-Odyssey'
@@ -141,7 +145,7 @@ for input_file_with_suffix in files_to_process:
         minibatch = False
 
         km = None
-        for case in range(0, 3):
+        for case in range(0, 1): # was 3
             if case == 0:
                 do_lda = True
                 do_lsa = False
@@ -372,83 +376,82 @@ for input_file_with_suffix in files_to_process:
                 logger.warn('no topic model chosen; quitting.')
                 quit()
 
+            frames = []
             tsne_init = 'random'  # could also be 'pca'
             # we would really like this to be related to the centroids from the k-means
             # todo initialize with the k-means centroids
-            tsne_perplexity = 20.0
-            tsne_early_exaggeration = 4.0
-            tsne_learning_rate = 300  # was1000.0
-            model = TSNE(n_components=2, random_state=random_state, init=tsne_init, perplexity=tsne_perplexity,
-                         early_exaggeration=tsne_early_exaggeration, learning_rate=tsne_learning_rate)
-            if False:
-                pass
-            elif do_lda:
-                try:
-                    scatter_points = model.fit_transform(lda_results)
-                except AssertionError as assertionError:
-                    logger.warn('%s : %s', (input_file, assertionError))
-            elif do_lsa:
-                scatter_points = model.fit_transform(lsa_results)
-            elif do_nmf:
-                scatter_points = model.fit_transform(nmf_results)
+            for tsne_perplexity_int in range(2, 50, 2):
+                tsne_perplexity = float(tsne_perplexity_int)
+                tsne_early_exaggeration = 4.0
+                tsne_learning_rate = 300  # was1000.0
+                model = TSNE(n_components=2, random_state=random_state, init=tsne_init, perplexity=tsne_perplexity,
+                             early_exaggeration=tsne_early_exaggeration, learning_rate=tsne_learning_rate)
+                if False:
+                    pass
+                elif do_lda:
+                    try:
+                        scatter_points = model.fit_transform(lda_results)
+                    except AssertionError as assertionError:
+                        logger.warn('%s : %s', (input_file, assertionError))
+                elif do_lsa:
+                    scatter_points = model.fit_transform(lsa_results)
+                elif do_nmf:
+                    scatter_points = model.fit_transform(nmf_results)
 
-            logger.debug('finished TSNE')
-            colormap = 'plasma'  # was 'gnuplot'
-            figsize = (16, 9)
-            pylab.figure(figsize=figsize)
-            xs = numpy.array([each[0] for each in scatter_points])
-            ys = numpy.array([each[1] for each in scatter_points])
-            clusters = numpy.array(km.labels_)
-            if False:
-                marker_choices = ['o', 'v', '^', '<', '>', '1', '2', '3', '4', '8', 's', 'p', '*', 'h', 'H', '+', 'x',
-                                  'D', 'd']
-                # markers = itertools.cycle(marker_choices)
-                x1 = len(marker_choices)
-                # all_data = zip(xs, ys, km.labels_)
-                different_labels = set(km.labels_)
-                marker_count = min(10, len(marker_choices))
-                x0 = len(different_labels) / marker_count
-                colors = pylab.cm.plasma(numpy.linspace(0, 1, x0))
-                # todo use a numpy array with a filter
-                for index, marker in enumerate(marker_choices[:marker_count]):
-                    pylab.scatter(xs[clusters == index], ys[clusters == index], marker=marker, c=colors)
+                logger.debug('finished TSNE')
+                colormap = 'plasma'  # was 'gnuplot'
+                figsize = (16, 9)
+                figure = pylab.figure(figsize=figsize)
+                xs = numpy.array([each[0] for each in scatter_points])
+                ys = numpy.array([each[1] for each in scatter_points])
+                clusters = numpy.array(km.labels_)
 
-            if False:
-                pylab.scatter(xs, ys, marker='x', c=km.labels_, cmap=colormap)
-            else:
-                colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
-                marker_choices = ['.', 'o', 'v', 's', 'x', 'D', '^']
-                kj = len(colors)
-                different_labels = sorted(set(km.labels_))
-                kl = len(different_labels) / kj + 1
-                for kk in different_labels:
-                    kk0 = kk / kl
-                    if kk0 > len(marker_choices):
-                        pass
-                    marker = marker_choices[kk / kl]
-                    color = colors[kk % kj]
-                    pylab.scatter(xs[clusters == kk], ys[clusters == kk], marker=marker, color=color)
+                # let's use the simple version for animation
+                if True:
+                    frames.append((pylab.scatter(xs, ys, marker='x', c=clusters, cmap=colormap),))
+                else:
+                    colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+                    marker_choices = ['.', 'o', 'v', 's', 'x', 'D', '^']
+                    kj = len(colors)
+                    different_labels = sorted(set(km.labels_))
+                    kl = len(different_labels) / kj + 1
+                    for kk in different_labels:
+                        kk0 = kk / kl
+                        if kk0 > len(marker_choices):
+                            pass
+                        marker = marker_choices[kk / kl]
+                        color = colors[kk % kj]
+                        pylab.scatter(xs[clusters == kk], ys[clusters == kk], marker=marker, color=color)
 
-            index = 1
-            if False:
-                for x, y in zip(xs, ys):
-                    # for the moment let's remove the page numbers
-                    pylab.text(x, y, str(index), color='k', fontsize=6)
-                    index += 1
-            # pylab.margins(0.1)
-            title = ' '.join([basename(file_name_root), 'pages: ', str(len(text)), 'clusters:', str(true_k)])
-            pylab.title(title)
-            # todo make the location of this text box sensible
-            pylab.text(1.5 * min(xs), 0, text_to_display, fontsize=12)
-            ticks = sorted(set(km.labels_))
-            if False:
-                color_bar = pylab.colorbar(ticks=ticks)
-                color_bar.ax.tick_params(labelsize=7)
-                # todo add cluster sizes to the ticks
-                color_bar.set_ticklabels(ticks)
-            out_file = output_folder + file_name_root + '-' + corpus + '-' + topic_model_name + output_file_suffix
-            logger.debug('writing figure to output file %s' % out_file)
-            pylab.savefig(out_file)
+                index = 1
+                if False:
+                    for x, y in zip(xs, ys):
+                        # for the moment let's remove the page numbers
+                        pylab.text(x, y, str(index), color='k', fontsize=6)
+                        index += 1
+                # pylab.margins(0.1)
+                title = ' '.join([basename(file_name_root), 'pages: ', str(len(text)), 'clusters:', str(true_k)])
+                if False:
+                    pylab.title(title)
+                    # todo make the location of this text box sensible
+                    pylab.text(1.5 * min(xs), 0, text_to_display, fontsize=12)
+                ticks = sorted(set(km.labels_))
+                if False:
+                    color_bar = pylab.colorbar(ticks=ticks)
+                    color_bar.ax.tick_params(labelsize=7)
+                    # todo add cluster sizes to the ticks
+                    color_bar.set_ticklabels(ticks)
+                out_file = output_folder + file_name_root + '-' + corpus + '-' + topic_model_name + output_file_suffix
+                if False:
+                    logger.debug('writing figure to output file %s' % out_file)
+                    pylab.savefig(out_file)
+                else:
+                    logger.debug('adding frames to animator')
+                    frames_animator = animation.ArtistAnimation(figure, frames, interval=50, repeat_delay=3000, blit=True)
+                    animation_output_file = 'lda-tsne-perplexity.mp4'
+                    logging.debug('writing animation to file %s' % animation_output_file)
+                    frames_animator.save(animation_output_file, writer=writer)
+
     except ValueError as valueError:
         logger.warn('%s : %s' % (input_file, valueError))
 
