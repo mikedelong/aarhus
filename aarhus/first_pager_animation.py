@@ -52,117 +52,7 @@ logger.debug('started.')
 
 input_file = ''
 
-problem_files = sorted(['digi330'])
-some_files = sorted([
-    '0084_LFeBk',
-    '07-07-16-Voter-attitudes-release',
-    '10.1.1.528.9390',
-    '1603_DoubleDatabase_Codebook',
-    '2016 Annual Report',
-    '24649',
-    '271339',
-    '3_7_2017_tables',
-    '58e7fef1935de',
-    '958746-The-Pentagon-Papers-Volume-1-Gravel-Edition',
-    '958764-The-Pentagon-Papers-Volume-2-Gravel-Edition',
-    'a479311',
-    'Benkler',
-    'BUDGET-2017-BUD',
-    'CPRT-115-HPRT-RU00-SAHR244-AMNT',
-    'David_Foster_Wallace_-_Infinite_Jest',
-    'donquixote',
-    'GPO-WARRENCOMMISSIONREPORT',
-    'Harvard-CAPS-Harris-Poll-April-Wave-Topline-Favorability-04.18.2017',
-    'Moby-Dick',
-    'Moby_Dick_NT',
-    'Olson (1967) Logic of Collective Action (book)',
-    'Progressive-Thinking',
-    'Proust-1',
-    'the-starfish-and-the-spider',
-    'Ulysses'
-])
 
-planet_ebook_files = sorted(['1984',
-                             'A-Christmas-Carol',
-                             'A-Portrait-of-the-Artist-as-a-Young-Man',
-                             'A-Tale-of-Two-Cities',
-                             'Aesops-Fables',
-                             'Agnes-Grey',
-                             'Alices-Adventures-in-Wonderland',
-                             'Andersens-Fairy-Tales',
-                             'Anna-Karenina',
-                             'Anne-of-Green-Gables',
-                             'Around-the-World-in-80-Days',
-                             'Beyond-Good-and-Evil',
-                             'Bleak-House',
-                             'Crime-and-Punishment',
-                             'David-Copperfield',
-                             'Down-and-Out-in-Paris-and-London',
-                             'Dracula',
-                             'Dubliners',
-                             'Emma',
-                             'Erewhon',
-                             'For-the-Term-of-His-Natural-Life',
-                             'Frankenstein',
-                             'Great-Expectations',
-                             'Grimms-Fairy-Tales',
-                             'Gullivers-Travels',
-                             'Heart-of-Darkness',
-                             'Jane-Eyre',
-                             'Kidnapped',
-                             'Lady-Chatterlys-Lover',
-                             'Les-Miserables',
-                             'Little-Women',
-                             'Madame-Bovary',
-                             'Middlemarch',
-                             'Moby-Dick',
-                             'Northanger-Abbey',
-                             'Nostromo-A-Tale-of-the-Seaboard',
-                             'Notes-from-the-Underground',
-                             'Of-Human-Bondage',
-                             'Oliver-Twist',
-                             'Paradise-Lost',
-                             'Persuasion',
-                             'Pollyanna',
-                             'Pride-and-Prejudice',
-                             'Robinson-Crusoe',
-                             'Sense-and-Sensibility',
-                             'Sons-and-Lovers',
-                             'Swanns-Way',
-                             'Tarzan-of-the-Apes',
-                             'Tender-is-the-Night',
-                             'Tess-of-the-dUrbervilles',
-                             'The-Adventures-of-Huckleberry-Finn',
-                             'The-Adventures-of-Tom-Sawyer',
-                             'The-Brothers-Karamazov',
-                             'The-Great-Gatsby',
-                             'The-Hound-of-the-Baskervilles',
-                             'The-Idiot',
-                             'The-Illiad',
-                             'The-Island-of-Doctor-Moreau',
-                             'The-Jungle-Book',
-                             'The-Last-of-the-Mohicans',
-                             'The-Merry-Adventures-of-Robin-Hood',
-                             'The-Metamorphosis',
-                             'The-Odyssey',
-                             'The-Picture-of-Dorian-Gray',
-                             'The-Portrait-of-a-Lady',
-                             'The-Prince',
-                             'The-Scarlet-Pimpernel',
-                             'The-Strange-Case-of-Dr-Jekyll',
-                             'The-Thirty-Nine-Steps',
-                             'The-Three-Musketeers',
-                             'The-Time-Machine',
-                             'The-Trial',
-                             'Treasure-Island',
-                             'Ulysses',
-                             'Utopia',
-                             'Vanity-Fair',
-                             'War-and-Peace',
-                             'Within-a-Budding-Grove',
-                             'Women-In-Love',
-                             'Wuthering-Heights'
-                             ])
 
 odyssey = 'The-Odyssey'
 ulysses = 'Ulysses'
@@ -172,11 +62,9 @@ input_file_suffix = '.pickle'
 output_file_suffix = '.png'
 
 input_glob = input_folder + '*' + input_file_suffix
-files_to_process = [input_folder + each + input_file_suffix for each in some_files]
 files_to_process = glob.glob(input_glob)
 files_to_process = [input_folder + ulysses + input_file_suffix]
 files_to_process = [input_folder + utopia + input_file_suffix]
-files_to_process = [input_folder + each + input_file_suffix for each in planet_ebook_files]
 files_to_process = [input_folder + odyssey + input_file_suffix]
 logger.debug('We have %d files to process.' % len(files_to_process))
 for input_file_with_suffix in files_to_process:
@@ -251,19 +139,6 @@ for input_file_with_suffix in files_to_process:
         n_top_words = 10
 
         minibatch = False
-        # # todo rationalize this
-        # true_k = 12
-        # true_k = tfidf.shape[0] * tfidf.shape[1] / tfidf.nnz
-        # logger.debug('we are looking for %d clusters' % true_k)
-        # verbose = False
-        # if minibatch:
-        #     km = MiniBatchKMeans(n_clusters=true_k, init='k-means++', n_init=1, init_size=1000, batch_size=1000,
-        #                          verbose=verbose, random_state=random_state, max_iter=1000, reassignment_ratio=0.001,
-        #                          max_no_improvement=100)
-        # else:
-        #     km = KMeans(n_clusters=true_k, init='k-means++', max_iter=100, n_init=1, verbose=verbose,
-        #                 random_state=random_state)
-        # logger.debug("Clustering sparse data with %s" % km)
 
         km = None
         for case in range(0, 3):
