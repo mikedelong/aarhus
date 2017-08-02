@@ -497,7 +497,7 @@ for input_file_with_suffix in files_to_process:
             tsne_init = 'random'  # could also be 'pca'
             # we would really like this to be related to the centroids from the k-means
             # todo initialize with the k-means centroids
-            tsne_perplexity = 50.0
+            tsne_perplexity = 20.0
             tsne_early_exaggeration = 4.0
             tsne_learning_rate = 300  # was1000.0
             model = TSNE(n_components=2, random_state=random_state, init=tsne_init, perplexity=tsne_perplexity,
@@ -520,9 +520,10 @@ for input_file_with_suffix in files_to_process:
             pylab.figure(figsize=figsize)
             xs = numpy.array([each[0] for each in scatter_points])
             ys = numpy.array([each[1] for each in scatter_points])
+            clusters = numpy.array(km.labels_)
             if False:
-                clusters = numpy.array(km.labels_)
-                marker_choices = ['o', 'v', '^', '<', '>', '1', '2', '3', '4', '8', 's', 'p', '*', 'h', 'H', '+', 'x', 'D', 'd']
+                marker_choices = ['o', 'v', '^', '<', '>', '1', '2', '3', '4', '8', 's', 'p', '*', 'h', 'H', '+', 'x',
+                                  'D', 'd']
                 # markers = itertools.cycle(marker_choices)
                 x1 = len(marker_choices)
                 # all_data = zip(xs, ys, km.labels_)
@@ -534,8 +535,22 @@ for input_file_with_suffix in files_to_process:
                 for index, marker in enumerate(marker_choices[:marker_count]):
                     pylab.scatter(xs[clusters == index], ys[clusters == index], marker=marker, c=colors)
 
+            if False:
+                pylab.scatter(xs, ys, marker='x', c=km.labels_, cmap=colormap)
+            else:
+                colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
+                marker_choices = ['.', 'o', 'v', 's', 'x', 'D', '^']
+                kj = len(colors)
+                different_labels = sorted(set(km.labels_))
+                kl = len(different_labels) / kj + 1
+                for kk in different_labels:
+                    kk0 = kk / kl
+                    if kk0 > len(marker_choices):
+                        pass
+                    marker = marker_choices[kk / kl]
+                    color = colors[kk % kj]
+                    pylab.scatter(xs[clusters == kk], ys[clusters == kk], marker=marker, color=color)
 
-            pylab.scatter(xs, ys, marker='x', c=km.labels_, cmap=colormap)
             index = 1
             if False:
                 for x, y in zip(xs, ys):
@@ -548,10 +563,11 @@ for input_file_with_suffix in files_to_process:
             # todo make the location of this text box sensible
             pylab.text(1.5 * min(xs), 0, text_to_display, fontsize=12)
             ticks = sorted(set(km.labels_))
-            color_bar = pylab.colorbar(ticks=ticks)
-            color_bar.ax.tick_params(labelsize=7)
-            # todo add cluster sizes to the ticks
-            color_bar.set_ticklabels(ticks)
+            if False:
+                color_bar = pylab.colorbar(ticks=ticks)
+                color_bar.ax.tick_params(labelsize=7)
+                # todo add cluster sizes to the ticks
+                color_bar.set_ticklabels(ticks)
             out_file = output_folder + file_name_root + '-' + corpus + '-' + topic_model_name + output_file_suffix
             logger.debug('writing figure to output file %s' % out_file)
             pylab.savefig(out_file)
