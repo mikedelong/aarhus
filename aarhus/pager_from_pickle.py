@@ -16,6 +16,7 @@ from sklearn.cluster import KMeans
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.decomposition import LatentDirichletAllocation
 from sklearn.decomposition import NMF
+from sklearn.decomposition import PCA
 from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -244,23 +245,13 @@ for input_file_with_suffix in files_to_process:
         tfidf = tf_idf_vectorizer.fit_transform(text)
         logger.debug('TF-IDF: n_samples: %d, n_features: %d, nnz: %d' % (tfidf.shape[0], tfidf.shape[1], tfidf.nnz))
 
+        # todo make this a setting
         random_state = 2
+        # todo make this a setting
         n_top_words = 10
 
+        # todo make this a setting
         minibatch = False
-        # # todo rationalize this
-        # true_k = 12
-        # true_k = tfidf.shape[0] * tfidf.shape[1] / tfidf.nnz
-        # logger.debug('we are looking for %d clusters' % true_k)
-        # verbose = False
-        # if minibatch:
-        #     km = MiniBatchKMeans(n_clusters=true_k, init='k-means++', n_init=1, init_size=1000, batch_size=1000,
-        #                          verbose=verbose, random_state=random_state, max_iter=1000, reassignment_ratio=0.001,
-        #                          max_no_improvement=100)
-        # else:
-        #     km = KMeans(n_clusters=true_k, init='k-means++', max_iter=100, n_init=1, verbose=verbose,
-        #                 random_state=random_state)
-        # logger.debug("Clustering sparse data with %s" % km)
 
         km = None
         for case in range(0, 3):
@@ -492,38 +483,72 @@ for input_file_with_suffix in files_to_process:
                 logger.warn('no topic model chosen; quitting.')
                 quit()
 
-            tsne_init = 'random'  # could also be 'pca'
-            # we would really like this to be related to the centroids from the k-means
-            # todo initialize with the k-means centroids
-            tsne_perplexity = 20.0
-            tsne_early_exaggeration = 4.0
-            tsne_learning_rate = 300  # was1000.0
-            model = TSNE(n_components=2, random_state=random_state, init=tsne_init, perplexity=tsne_perplexity,
-                         early_exaggeration=tsne_early_exaggeration, learning_rate=tsne_learning_rate)
+            # True False
+            do_tsne = False
+            do_agglomeration  = False
+            do_pca = True
+            # todo add a test to make sure we do one of these
             if False:
                 pass
-            elif do_lda:
-                try:
-                    scatter_points = model.fit_transform(lda_results)
-                except AssertionError as assertionError:
-                    logger.warn('%s : %s', (input_file, assertionError))
-            elif do_lsa:
-                scatter_points = model.fit_transform(lsa_results)
-            elif do_nmf:
-                scatter_points = model.fit_transform(nmf_results)
+            elif do_agglomeration:
+                pass
+            elif do_pca:
+                pass
+                model = PCA(n_components=2,random_state=random_state)
+                if False:
+                    pass
+                elif do_lda:
+                    try:
+                        scatter_points = model.fit_transform(lda_results)
+                    except AssertionError as assertionError:
+                        logger.warn('%s : %s', (input_file, assertionError))
+                elif do_lsa:
+                    scatter_points = model.fit_transform(lsa_results)
+                elif do_nmf:
+                    scatter_points = model.fit_transform(nmf_results)
 
-            kl_divergence = model.kl_divergence_
-            logger.debug('KL divergence: %.2f' % kl_divergence)
-            kl_divergence_text = '\nKL divergence: %.2f' % kl_divergence
-            text_to_display += kl_divergence_text
+                pca_explained_variance = model.explained_variance_
+                logger.debug('PCA explained variance: %s' % pca_explained_variance)
+                pca_text = '\nPCA explained variance: %s' % pca_explained_variance
+                text_to_display += pca_text
 
-            logger.debug('finished TSNE')
+            elif do_tsne:
+                tsne_init = 'random'  # could also be 'pca'
+                tsne_init = 'pca'
+                # we would really like this to be related to the centroids from the k-means
+                # todo initialize with the k-means centroids
+
+                tsne_perplexity = 20.0
+                tsne_early_exaggeration = 4.0
+                tsne_learning_rate = 300  # was1000.0
+                model = TSNE(n_components=2, random_state=random_state, init=tsne_init, perplexity=tsne_perplexity,
+                             early_exaggeration=tsne_early_exaggeration, learning_rate=tsne_learning_rate)
+                if False:
+                    pass
+                elif do_lda:
+                    try:
+                        scatter_points = model.fit_transform(lda_results)
+                    except AssertionError as assertionError:
+                        logger.warn('%s : %s', (input_file, assertionError))
+                elif do_lsa:
+                    scatter_points = model.fit_transform(lsa_results)
+                elif do_nmf:
+                    scatter_points = model.fit_transform(nmf_results)
+
+                kl_divergence = model.kl_divergence_
+                logger.debug('KL divergence: %.2f' % kl_divergence)
+                kl_divergence_text = '\nKL divergence: %.2f' % kl_divergence
+                text_to_display += kl_divergence_text
+
+                logger.debug('finished TSNE')
+
             colormap = 'plasma'  # was 'gnuplot'
             figsize = (16, 9)
             pylab.figure(figsize=figsize)
             # todo remove these two lines
             xs = numpy.array([each[0] for each in scatter_points])
             ys = numpy.array([each[1] for each in scatter_points])
+
             clusters = numpy.array(km.labels_)
             if False:
                 marker_choices = ['o', 'v', '^', '<', '>', '1', '2', '3', '4', '8', 's', 'p', '*', 'h', 'H', '+', 'x',
@@ -557,7 +582,7 @@ for input_file_with_suffix in files_to_process:
             index = 1
             if False:
                 for x, y in zip(xs, ys):
-                    # for the moment let's remove the page numbers
+                    # for the moment let's not add the page numbers
                     pylab.text(x, y, str(index), color='k', fontsize=6)
                     index += 1
             # pylab.margins(0.1)
