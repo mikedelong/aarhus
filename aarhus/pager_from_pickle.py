@@ -420,9 +420,7 @@ for input_file_with_suffix in files_to_process:
                 svd = TruncatedSVD(n_components, random_state=random_state)
                 normalizer = Normalizer(copy=False)
                 lsa = make_pipeline(svd, normalizer)
-
                 lsa_results = lsa.fit_transform(tfidf)
-
                 explained_variance = svd.explained_variance_ratio_.sum()
                 logger.debug('Explained variance of the SVD step: %d' % int(explained_variance * 100))
 
@@ -514,10 +512,16 @@ for input_file_with_suffix in files_to_process:
             elif do_nmf:
                 scatter_points = model.fit_transform(nmf_results)
 
+            kl_divergence = model.kl_divergence_
+            logger.debug('KL divergence: %.2f' % kl_divergence)
+            kl_divergence_text = '\nKL divergence: %.2f' % kl_divergence
+            text_to_display += kl_divergence_text
+
             logger.debug('finished TSNE')
             colormap = 'plasma'  # was 'gnuplot'
             figsize = (16, 9)
             pylab.figure(figsize=figsize)
+            # todo remove these two lines
             xs = numpy.array([each[0] for each in scatter_points])
             ys = numpy.array([each[1] for each in scatter_points])
             clusters = numpy.array(km.labels_)
@@ -526,7 +530,6 @@ for input_file_with_suffix in files_to_process:
                                   'D', 'd']
                 # markers = itertools.cycle(marker_choices)
                 x1 = len(marker_choices)
-                # all_data = zip(xs, ys, km.labels_)
                 different_labels = set(km.labels_)
                 marker_count = min(10, len(marker_choices))
                 x0 = len(different_labels) / marker_count
