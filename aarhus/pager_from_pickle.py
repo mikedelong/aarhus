@@ -14,6 +14,7 @@ from nltk.stem.snowball import SnowballStemmer
 from sklearn import metrics
 from sklearn.cluster import KMeans
 from sklearn.cluster import MiniBatchKMeans
+from sklearn.cluster import FeatureAgglomeration
 from sklearn.decomposition import LatentDirichletAllocation
 from sklearn.decomposition import NMF
 from sklearn.decomposition import PCA
@@ -485,13 +486,24 @@ for input_file_with_suffix in files_to_process:
 
             # True False
             do_tsne = False
-            do_agglomeration  = False
-            do_pca = True
+            do_agglomeration  = True
+            do_pca = False
             # todo add a test to make sure we do one of these
             if False:
                 pass
             elif do_agglomeration:
-                pass
+                model = FeatureAgglomeration()
+                if False:
+                    pass
+                elif do_lda:
+                    try:
+                        scatter_points = model.fit_transform(lda_results)
+                    except AssertionError as assertionError:
+                        logger.warn('%s : %s', (input_file, assertionError))
+                elif do_lsa:
+                    scatter_points = model.fit_transform(lsa_results)
+                elif do_nmf:
+                    scatter_points = model.fit_transform(nmf_results)
             elif do_pca:
                 pass
                 model = PCA(n_components=2,random_state=random_state)
