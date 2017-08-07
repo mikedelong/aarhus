@@ -170,12 +170,25 @@ input_file_suffix = '.pickle'
 output_file_suffix = '.png'
 
 input_glob = input_folder + '*' + input_file_suffix
-files_to_process = [input_folder + each + input_file_suffix for each in some_files]
-files_to_process = glob.glob(input_glob)
-files_to_process = [input_folder + ulysses + input_file_suffix]
-files_to_process = [input_folder + utopia + input_file_suffix]
-files_to_process = [input_folder + each + input_file_suffix for each in planet_ebook_files]
-files_to_process = [input_folder + odyssey + input_file_suffix]
+case_to_run = 5
+if case_to_run < 0:
+    pass
+elif case_to_run == 0:
+    files_to_process = [input_folder + each + input_file_suffix for each in some_files]
+elif case_to_run == 1:
+    files_to_process = glob.glob(input_glob)
+elif case_to_run == 2:
+    files_to_process = [input_folder + ulysses + input_file_suffix]
+elif case_to_run == 3:
+    files_to_process = [input_folder + utopia + input_file_suffix]
+elif case_to_run == 4:
+    files_to_process = [input_folder + each + input_file_suffix for each in planet_ebook_files]
+elif case_to_run == 5:
+    files_to_process = [input_folder + odyssey + input_file_suffix]
+else:
+    logger.warn('Case to run not defined; case to run is %d' % case_to_run)
+    quit()
+
 logger.debug('We have %d files to process.' % len(files_to_process))
 for input_file_with_suffix in files_to_process:
     try:
