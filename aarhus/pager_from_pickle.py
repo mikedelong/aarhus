@@ -171,6 +171,7 @@ output_file_suffix = '.png'
 
 input_glob = input_folder + '*' + input_file_suffix
 case_to_run = 5
+files_to_process = list()
 if case_to_run < 0:
     pass
 elif case_to_run == 0:
