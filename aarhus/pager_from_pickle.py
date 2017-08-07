@@ -1,20 +1,20 @@
 import collections
 import glob
+import json
 import logging
 import pickle
 import time
 from os.path import basename
 
-import itertools
 import nltk
 import numpy
 import pylab
 from nltk.stem.porter import PorterStemmer
 from nltk.stem.snowball import SnowballStemmer
 from sklearn import metrics
+from sklearn.cluster import FeatureAgglomeration
 from sklearn.cluster import KMeans
 from sklearn.cluster import MiniBatchKMeans
-from sklearn.cluster import FeatureAgglomeration
 from sklearn.decomposition import LatentDirichletAllocation
 from sklearn.decomposition import NMF
 from sklearn.decomposition import PCA
@@ -24,7 +24,6 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.manifold import TSNE
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import Normalizer
-import json
 
 start_time = time.time()
 formatter = logging.Formatter('%(asctime)s : %(levelname)s :: %(message)s')
@@ -485,8 +484,8 @@ for input_file_with_suffix in files_to_process:
                 quit()
 
             # True False
-            do_tsne = False
-            do_agglomeration  = True
+            do_tsne = True
+            do_agglomeration = False
             do_pca = False
             # todo add a test to make sure we do one of these
             if False:
@@ -506,7 +505,7 @@ for input_file_with_suffix in files_to_process:
                     scatter_points = model.fit_transform(nmf_results)
             elif do_pca:
                 pass
-                model = PCA(n_components=2,random_state=random_state)
+                model = PCA(n_components=2, random_state=random_state)
                 if False:
                     pass
                 elif do_lda:
