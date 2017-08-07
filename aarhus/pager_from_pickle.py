@@ -484,9 +484,13 @@ for input_file_with_suffix in files_to_process:
                 quit()
 
             # True False
-            do_tsne = True
             do_agglomeration = False
             do_pca = False
+            do_tsne = True
+            if [do_agglomeration, do_pca, do_tsne].count(True) != 1:
+                logger.warn('Can do exactly one of FeatureAgglomeration, PCA, t-SNE.')
+                quit()
+ 
             # todo add a test to make sure we do one of these
             if False:
                 pass
